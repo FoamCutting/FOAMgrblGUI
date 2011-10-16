@@ -65,6 +65,8 @@ private slots:
     void on_actionNew_GCode_File_triggered();
     void on_jogYpositive_clicked();
 
+    void on_jogXYpositive_clicked();
+
 signals:
     void GCodeDocumentAltered();
 

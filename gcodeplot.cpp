@@ -24,7 +24,8 @@ void GCodePlot::setSettings(Settings *s)
 void GCodePlot::applySettings()
 {
 //    qDebug() << "applySettings";
-    settings->GetPlotSettings(&plot);
+//    settings->GetPlotSettings(&plot);
+    plot = settings->PlotSettings();
     scaleFactor = UNITS_PER_INCH;
     arcCenterMode = Incremental;
 }

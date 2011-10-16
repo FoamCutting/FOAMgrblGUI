@@ -30,7 +30,8 @@ public:
          DocumentNotOpen,
          UnevenArcScalingNotSupported,
          SaveFailed,
-         LineNumbersExist};
+         LineNumbersExist,
+         NoArduinoConnected};
 
 private slots:
     void on_closeButton_clicked();

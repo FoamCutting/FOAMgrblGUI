@@ -3,7 +3,8 @@
 ArduinoIO::ArduinoIO(QObject *parent) :
     QObject(parent)
 {
-    portOpen = false;
+    deviceState = DISCONNECTED;
+    connect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(SetDeviceState(int)));
 }
 
 void ArduinoIO::SetErrorHandler(ErrorHandler *handler)
@@ -50,6 +51,16 @@ int ArduinoIO::NumberConnected()
     return ports.count();
 }
 
+int ArduinoIO::DeviceState()
+{
+    return deviceState;
+}
+
+void ArduinoIO::SetDeviceState(int state)
+{
+    deviceState = state;
+}
+
 bool ArduinoIO::OpenPort()
 {
     arduinoPort = new QextSerialPort(arduinoPortName);
@@ -59,19 +70,21 @@ bool ArduinoIO::OpenPort()
     arduinoPort->setStopBits(STOP_1);
 //    if(userArduinoSettings.baudRate == "9600")
     arduinoPort->setBaudRate(BAUD9600);
-    portOpen = arduinoPort->open(QIODevice::ReadWrite);
+    deviceState = arduinoPort->open(QIODevice::ReadWrite);
     connect(arduinoPort, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
-    if(portOpen) {
-        flush();
+    if(deviceState) {
+        emit deviceStateChanged(CONNECTED);
+       // flush();
     }
-    return portOpen;
+    return deviceState;
 }
 
 void ArduinoIO::ClosePort()
 {
     disconnect(arduinoPort, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+    dataBuffer.clear();
     arduinoPort->close();
-    portOpen = false;
+    deviceState = DISCONNECTED;
 }
 
 bool ArduinoIO::SetBaudRate(int baud)
@@ -94,7 +107,7 @@ void ArduinoIO::SetGrblVersion(int version)
 void ArduinoIO::SetPortName(QString name)
 {
     arduinoPortName = name;
-    if(portOpen)
+    if(deviceState)
         arduinoPort->setPortName(name);
 }
 
@@ -119,10 +132,24 @@ void ArduinoIO::flush()
 void ArduinoIO::onReadyRead()
 {
     QString data = arduinoPort->readLine().trimmed();
-    if(data == "Stored new setting")
+    if(data == "")
         return;
+    else if(data == "Stored new setting")
+        return;
+    else if(data == "Grbl 0.6b") {
+        SetGrblVersion(1);
+        return;
+    }
+    else if(data == "Grbl 0.51") {
+        SetGrblVersion(0);
+        return;
+    }
+    else if(data == "'$' to dump current settings") {
+        emit deviceStateChanged(READY);
+        return;
+    }
     dataBuffer << data;
-    qDebug() << data;
+    qDebug() << data << " -- from oRR";
     emit newData();
 }
 

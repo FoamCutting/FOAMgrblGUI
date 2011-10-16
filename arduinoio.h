@@ -15,7 +15,7 @@ private:
     QextSerialPort *arduinoPort;
     QString arduinoPortName;
     QList<QString> dataBuffer;
-    bool portOpen;
+    int deviceState;
     int grblVersion;
     ErrorHandler *err;
 
@@ -26,6 +26,7 @@ public:
     explicit ArduinoIO(QObject *parent = 0);
     QList<QextPortInfo> GetPorts();
     bool OpenPort();
+    void OpenPort2();
     void ClosePort();
     bool SetBaudRate(int);
     void SetPortName(QString);
@@ -36,6 +37,9 @@ public:
     void SetGrblVersion(int);
     int NumberConnected();
 
+    int DeviceState();
+    enum{DISCONNECTED, CONNECTED, PORTOPEN, SENDING, RECIEVING, READY};
+
     void SeekRelative(int, int, int);
     void SeekAbsolute(int, int, int);
 
@@ -43,10 +47,14 @@ public:
 
 signals:
     void newData();
+    void portReady();
+    void deviceStateChanged(int);
 
 public slots:
     void onReadyRead();
 
+private slots:
+    void SetDeviceState(int);
 };
 
 #endif // ARDUINOIO_H

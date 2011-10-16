@@ -53,10 +53,8 @@ GrblCage::~GrblCage()
 
 void GrblCage::GetGridScale()
 {
-    Settings::plotSettings settings;
-    Settings Settings;
-    Settings.GetPlotSettings(&settings);
-    if(settings.gridUnits == 0)
+    Settings::plotSettings plotSet = settings->PlotSettings();
+    if(plotSet.gridUnits == 0)
         gridScale = 254;
     else
         gridScale = 100;
@@ -367,4 +365,9 @@ void GrblCage::on_jogYpositive_clicked()
 {
     settings->FindMachine();
 //    arduino->SeekRelative(0, 0.1, 0);
+}
+
+void GrblCage::on_jogXYpositive_clicked()
+{
+    arduino->ClosePort();
 }

@@ -78,7 +78,11 @@ public:
     static const plotSettings defaultPlotSettings;
     static const grblSettings defaultGrblSettings;
     static const arduinoSettings defaultArduinoSettings;
-    void GetPlotSettings(plotSettings*);
+    plotSettings PlotSettings();
+    grblSettings DeviceGrblSettings();
+    grblSettings LocalGrblSettings();
+    arduinoSettings ArduinoSettings();
+    void GetPlotSettings();
     void GetGrblSettings(grblSettings*);
     void SetArduino(ArduinoIO*);
     void FindMachine();
@@ -92,7 +96,8 @@ private slots:
     void on_cutColor_tButton_clicked();
     void on_moveColor_tButton_clicked();
     void on_plotSave_pButton_clicked();
-    void GetDeviceGrblSettings2();
+    void GetDeviceGrblSettings2(int);
+    void GetDeviceGrblSettings3();
     void PutDeviceGrblSettings2();
     void on_refreshArduinoPortList_tButton_clicked();
     void on_settings_clicked();
