@@ -39,23 +39,23 @@ class Settings : public QWidget
 public:
     ~Settings();
     explicit Settings(QWidget *parent = 0);
-    struct grblSettings {
-        int grblVersion;
-        float stepsX;
-        float stepsY;
-        float stepsZ;
-        float feedRate;
-        float seekRate;
-        float arcSegment;
-        float acceleration;
-        float cornering;
-        uint8_t stepInvert;
-        uint8_t stepPulse;
-        //uint8_t microsteps;
+//    struct grblSettings {
+//        int grblVersion;
+//        float stepsX;
+//        float stepsY;
+//        float stepsZ;
+//        float feedRate;
+//        float seekRate;
+//        float arcSegment;
+//        float acceleration;
+//        float cornering;
+//        uint8_t stepInvert;
+//        uint8_t stepPulse;
+//        //uint8_t microsteps;
 
-        bool operator==(grblSettings);
-        bool CompareFloats(float, float);
-    };
+//        bool operator==(grblSettings);
+//        bool CompareFloats(float, float);
+//    };
     struct plotSettings {
         bool machineSizeUnits;
         float sizeX;
@@ -76,14 +76,14 @@ public:
     static QString currentMachineName;
     static QDir applicationDirectory;
     static const plotSettings defaultPlotSettings;
-    static const grblSettings defaultGrblSettings;
+    static const ArduinoIO::grblSettings defaultGrblSettings;
     static const arduinoSettings defaultArduinoSettings;
     plotSettings PlotSettings();
-    grblSettings DeviceGrblSettings();
-    grblSettings LocalGrblSettings();
+    ArduinoIO::grblSettings DeviceGrblSettings();
+    ArduinoIO::grblSettings LocalGrblSettings();
     arduinoSettings ArduinoSettings();
     void GetPlotSettings();
-    void GetGrblSettings(grblSettings*);
+    void GetGrblSettings(ArduinoIO::grblSettings*);
     void SetArduino(ArduinoIO*);
     void FindMachine();
     void SetErrorHandler(ErrorHandler*);
@@ -96,14 +96,12 @@ private slots:
     void on_cutColor_tButton_clicked();
     void on_moveColor_tButton_clicked();
     void on_plotSave_pButton_clicked();
-    void GetDeviceGrblSettings2(int);
-    void GetDeviceGrblSettings3();
     void PutDeviceGrblSettings2();
     void on_refreshArduinoPortList_tButton_clicked();
     void on_settings_clicked();
     void on_report_clicked();
     void on_grblVerson_combo_currentIndexChanged(int index);
-    void CompareGrblSettings2();
+    void CompareGrblSettings(int);
     void FindMachine2(bool);
     void on_plotDefaults_pButton_clicked();
 
@@ -113,13 +111,11 @@ private:
     inline int OpenFileStream(QDataStream*);
     inline int CloseFileStream();
 
-    void GetDeviceGrblSettings();
     void PutDeviceGrblSettings();
     void PutGrblSettings();
     void GrblDefaults();
     void DisplayGrblSettings();
     void SaveGrblSettings();
-    void CompareGrblSettings();
     int GetGrblVersion();
     void AdjustForGrblVersion();
 
@@ -128,8 +124,8 @@ private:
     void PlotDefaults();
     void SavePlotSettings();
 
-    grblSettings userGrblSettings;
-    grblSettings deviceGrblSettings;
+    ArduinoIO::grblSettings userGrblSettings;
+    ArduinoIO::grblSettings deviceGrblSettings;
     plotSettings userPlotSettings;
     arduinoSettings userArduinoSettings;
     ErrorHandler *err;
@@ -151,7 +147,6 @@ signals:
     void settingsHidden();
     void settingsShown();
     void plotSettingsChanged();
-    void getDeviceGrblSettingsFinished();
     void CompareGrblSettingsResult(bool);
 };
 

@@ -6,6 +6,9 @@
 #include "qextserialenumerator.h"
 #include "qextserialport.h"
 #include "errorhandler.h"
+#include <QTimer>
+#include "inttypes.h"
+#include "math.h"
 
 class ArduinoIO : public QObject
 {
@@ -18,8 +21,28 @@ private:
     int deviceState;
     int grblVersion;
     ErrorHandler *err;
+    void GetDeviceGrblSettings();
+    void ClearGrblSettings();
 
 public:
+    struct grblSettings {
+        int grblVersion;
+        float stepsX;
+        float stepsY;
+        float stepsZ;
+        float feedRate;
+        float seekRate;
+        float arcSegment;
+        float acceleration;
+        float cornering;
+        uint8_t stepInvert;
+        uint8_t stepPulse;
+        //uint8_t microsteps;
+
+        bool operator==(grblSettings);
+        bool CompareFloats(float, float);
+    };
+    grblSettings currentGrblSettings;
     void SetErrorHandler(ErrorHandler*);
     QList<QextPortInfo> ports;
     bool IsReady();
@@ -33,15 +56,15 @@ public:
     QString portName();
     friend ArduinoIO* &operator<<(ArduinoIO*, QString);
     QString getLine();
-    void flush();
+    void Flush();
     void SetGrblVersion(int);
     int NumberConnected();
 
     int DeviceState();
-    enum{DISCONNECTED, CONNECTED, PORTOPEN, SENDING, RECIEVING, READY};
+    enum{DISCONNECTED, CONNECTED, CHECKING, BUSY, READY};
 
-    void SeekRelative(int, int, int);
-    void SeekAbsolute(int, int, int);
+    void SeekRelative(double, double, double);
+    void SeekAbsolute(double, double, double);
 
 //    ArduinoIO operator <<(QString);
 
@@ -49,12 +72,15 @@ signals:
     void newData();
     void portReady();
     void deviceStateChanged(int);
+    void getDeviceGrblSettingsFinished();
 
 public slots:
     void onReadyRead();
+    void GetDeviceGrblSettings(int);
 
 private slots:
     void SetDeviceState(int);
+    void GetDeviceGrblSettings2();
 };
 
 #endif // ARDUINOIO_H

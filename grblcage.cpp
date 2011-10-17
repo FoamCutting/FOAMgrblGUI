@@ -8,7 +8,6 @@ GrblCage::GrblCage(QWidget *parent) :
     ui->setupUi(this);
     plotter = new GCodePlot(this);
     editor = new GCodeText;
-    GCodeDocument = new QTextDocument;
     err = new ErrorHandler;
     interceptor = new EventFilterizer;
     settings = new Settings;
@@ -16,13 +15,14 @@ GrblCage::GrblCage(QWidget *parent) :
     plotter->setSettings(settings);
     settings->SetArduino(arduino);
     settings->SetErrorHandler(err);
+    settings->FindMachine();
 
+    GCodeDocument = new QTextDocument;
     panning = false;
     gcodeFileOpen = false;
     ui->gcodePlotter->setMouseTracking(true);
     ui->gcodePlotter->viewport()->installEventFilter(interceptor);
     ui->gcodePlotter->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-
 
     QObject::connect(this, SIGNAL(GCodeDocumentAltered()),plotter,SLOT(refreshView()));
     QObject::connect(interceptor, SIGNAL(scrollIntercept(float,QPoint)),this,SLOT(scaleView(float,QPoint)));
@@ -31,13 +31,12 @@ GrblCage::GrblCage(QWidget *parent) :
     QObject::connect(interceptor, SIGNAL(mouseMiddleReleaseIntercept()),this,SLOT(panEnd()));
     QObject::connect(interceptor, SIGNAL(resizeIntercept()),this,SLOT(AdjustForResize()));
 
-    statusBar()->showMessage("GrblCage initiated");
-
-
     QObject::connect(settings,SIGNAL(settingsHidden()),this,SLOT(EnableMainWindow()));
     QObject::connect(settings, SIGNAL(plotSettingsChanged()), plotter, SLOT(refreshView()));
     QObject::connect(settings, SIGNAL(plotSettingsChanged()), this, SLOT(GetGridScale()));
     GetGridScale();
+
+    statusBar()->showMessage("GrblCage initiated");
 }
 
 GrblCage::~GrblCage()
@@ -361,13 +360,57 @@ void GrblCage::on_actionRemove_Line_Numbers_triggered()
     err->assessErrorList();
 }
 
+void GrblCage::on_needleStartStop_clicked()
+{
+
+}
+
 void GrblCage::on_jogYpositive_clicked()
 {
-    settings->FindMachine();
-//    arduino->SeekRelative(0, 0.1, 0);
+//    settings->FindMachine();
+    arduino->SeekRelative(0, _JogIncrement, 0);
 }
 
 void GrblCage::on_jogXYpositive_clicked()
 {
-    arduino->ClosePort();
+//    arduino->ClosePort();
+    arduino->SeekRelative(_JogIncrement, _JogIncrement, 0);
+
+}
+
+void GrblCage::on_jogXnegativeYpositive_clicked()
+{
+//    arduino->GetPorts();
+//    if(arduino->ports.isEmpty())
+//        return;
+//    arduino->SetPortName(arduino->ports.at(0).physName);
+//    arduino->OpenPort();
+    arduino->SeekRelative(-_JogIncrement, _JogIncrement, 0);
+
+}
+
+void GrblCage::on_jogXnegative_clicked()
+{
+    arduino->SeekRelative(-_JogIncrement, 0, 0);
+}
+
+
+void GrblCage::on_jogXpositive_clicked()
+{
+    arduino->SeekRelative(_JogIncrement, 0, 0);
+}
+
+void GrblCage::on_jogXYnegative_clicked()
+{
+    arduino->SeekRelative(-_JogIncrement, -_JogIncrement, 0);
+}
+
+void GrblCage::on_jogYnegative_clicked()
+{
+    arduino->SeekRelative(0, -_JogIncrement, 0);
+}
+
+void GrblCage::on_jogXpositiveYnegative_clicked()
+{
+    arduino->SeekRelative(_JogIncrement, -_JogIncrement, 0);
 }

@@ -16,6 +16,8 @@
 
 #include <QDebug>
 
+#define _JogIncrement 0.1
+
 
 namespace Ui {
     class GrblCage;
@@ -66,6 +68,20 @@ private slots:
     void on_jogYpositive_clicked();
 
     void on_jogXYpositive_clicked();
+
+    void on_jogXnegativeYpositive_clicked();
+
+    void on_jogXnegative_clicked();
+
+    void on_needleStartStop_clicked();
+
+    void on_jogXpositive_clicked();
+
+    void on_jogXYnegative_clicked();
+
+    void on_jogYnegative_clicked();
+
+    void on_jogXpositiveYnegative_clicked();
 
 signals:
     void GCodeDocumentAltered();
