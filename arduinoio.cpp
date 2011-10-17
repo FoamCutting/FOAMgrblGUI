@@ -237,7 +237,6 @@ void ArduinoIO::GetDeviceGrblSettings(int arduinoState)
          this << QString("\r\n\r\n");
          this << QString("$\n");
          disconnect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(GetDeviceGrblSettings(int)));
-//         QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings2()));
          connect(this, SIGNAL(ok()), this, SLOT(GetDeviceGrblSettings2()));
          return;
      }

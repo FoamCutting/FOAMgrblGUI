@@ -4,7 +4,7 @@
 GCodePlot::GCodePlot(QObject *parent) :
     QObject(parent)
 {
-    GCodeDocumentSet = false;
+    GCodeFileSet = false;
     GCodeScene = new QGraphicsScene;
     coordinateMode = Absolute;
     arcCenterMode = Incremental;
@@ -32,22 +32,22 @@ void GCodePlot::applySettings()
 
 void GCodePlot::refreshView()
 {
-    if(GCodeDocumentSet)
+    if(GCodeFileSet)
     {
         GCodeScene->clear();
         processGCodes();
     }
 }
 
-void GCodePlot::setDocument(QTextDocument *document)
+void GCodePlot::setFile(QFile *file)
 {
-    GCodeDocument = document;
-    GCodeDocumentSet = true;
+    GCodeFile = file;
+    GCodeFileSet = true;
 }
 
-QTextDocument* GCodePlot::document()
+QFile* GCodePlot::file()
 {
-    return GCodeDocument;
+    return GCodeFile;
 }
 
 QGraphicsScene* GCodePlot::scene()
@@ -92,17 +92,15 @@ void GCodePlot::processGCodes()
     float endCoord[2] = {0};
     float arcCenter[2] = {0};
     float radius = 0;
-    QString docString = GCodeDocument->toPlainText();
-    QTextStream docStream(&docString);
-    docStream.seek(0);
+    GCodeFile->seek(0);
 
-    while(!(docStream.atEnd()))
+    while(!(GCodeFile->atEnd()))
     {
-        QString codeLine;
+        char line[100];
         QList<QString> codeLineList;
         QString command;
-        codeLine = docStream.readLine();
-        codeLineList = codeLine.toUpper().split(" ", QString::SkipEmptyParts);
+        GCodeFile->readLine(line, sizeof(line));
+        codeLineList = QString(line).toUpper().trimmed().split(" ", QString::SkipEmptyParts);
         for(int i = 0; i<(codeLineList.size()); i++)
         {
             command = codeLineList[i].trimmed();

@@ -58,7 +58,7 @@ void ErrorHandler::assessErrorList()
         case FileIsIncremental:
             display("File is already Incremental\n");
             break;
-        case DocumentNotOpen:
+        case GCodeFileNotOpen:
             display("There is no open file\n");
             break;
         case UnevenArcScalingNotSupported:

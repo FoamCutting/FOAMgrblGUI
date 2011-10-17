@@ -223,7 +223,7 @@ void GrblCage::AdjustForResize()
 void GrblCage::on_actionNew_GCode_File_triggered()
 {
     GCodeDocument->setPlainText("");
-    plotter->setDocument(GCodeDocument);
+    plotter->setFile(GCodeFile);
     editor->setDocument(GCodeDocument);
     emit GCodeDocumentAltered();
 
@@ -273,7 +273,7 @@ void GrblCage::on_actionOpen_GCode_File_triggered()
         GCodeFile->open(QIODevice::ReadWrite);
         GCodeDocument->setPlainText(GCodeFile->readAll());
 
-        plotter->setDocument(GCodeDocument);
+        plotter->setFile(GCodeFile);
         editor->setDocument(GCodeDocument);
         emit GCodeDocumentAltered();
 
@@ -428,6 +428,6 @@ void GrblCage::StreamFile()
         }
     }
     else
-        err->pushError(ErrorHandler::FileNotOpen);
+        err->pushError(ErrorHandler::GCodeFileNotOpen);
 }
 

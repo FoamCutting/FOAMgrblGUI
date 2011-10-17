@@ -6,7 +6,6 @@
 
 
 #include <QObject>
-#include <QTextDocument>
 #include <QGraphicsScene>
 #include <QTextStream>
 #include <math.h>
@@ -24,8 +23,8 @@ public:
     explicit GCodePlot(QObject *parent = 0);
     ~GCodePlot();
     void processGCodes();
-    QTextDocument* document();
-    void setDocument(QTextDocument*);
+    QFile* file();
+    void setFile(QFile*);
     QGraphicsScene* scene();
     void setSettings(Settings*);
 
@@ -40,8 +39,8 @@ private:
 
     QPen drawPen;
     QGraphicsScene* GCodeScene;
-    QTextDocument* GCodeDocument;
-    bool GCodeDocumentSet;
+    QFile* GCodeFile;
+    bool GCodeFileSet;
 
     enum{INCHES, MM};
     bool arcMode;

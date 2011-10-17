@@ -33,7 +33,7 @@ void GCodeText::scale(float xScale, float yScale)
 {
     if(!GCodeDocumentSet)
     {
-        err->pushError(ErrorHandler::DocumentNotOpen);
+        err->pushError(ErrorHandler::GCodeFileNotOpen);
         err->assessErrorList();
         return;
     }
@@ -153,7 +153,7 @@ void GCodeText::offset(float xOffset, float yOffset, bool units)
     float unitMultiplier = 1;
     if(!GCodeDocumentSet)
     {
-        err->pushError(ErrorHandler::DocumentNotOpen);
+        err->pushError(ErrorHandler::GCodeFileNotOpen);
         err->assessErrorList();
         return;
     }
@@ -253,7 +253,7 @@ void GCodeText::toAbsolute()
 {
     if(!GCodeDocumentSet)
     {
-        err->pushError(ErrorHandler::DocumentNotOpen);
+        err->pushError(ErrorHandler::GCodeFileNotOpen);
         err->assessErrorList();
         return;
     }
@@ -352,7 +352,7 @@ void GCodeText::toIncremental()
 {
     if(!GCodeDocumentSet)
     {
-        err->pushError(ErrorHandler::DocumentNotOpen);\
+        err->pushError(ErrorHandler::GCodeFileNotOpen);\
         err->assessErrorList();
         return;
     }
@@ -451,7 +451,7 @@ void GCodeText::addLineNumbers()
 {
     if(!GCodeDocumentSet)
     {
-        err->pushError(ErrorHandler::DocumentNotOpen);
+        err->pushError(ErrorHandler::GCodeFileNotOpen);
         err->assessErrorList();
         return;
     }
@@ -497,7 +497,7 @@ void GCodeText::removeLineNumbers()
 {
     if(!GCodeDocumentSet)
     {
-        err->pushError(ErrorHandler::DocumentNotOpen);
+        err->pushError(ErrorHandler::GCodeFileNotOpen);
         err->assessErrorList();
         return;
     }
