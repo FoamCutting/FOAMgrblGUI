@@ -69,6 +69,7 @@ public:
 //    ArduinoIO operator <<(QString);
 
 signals:
+    void ok();
     void newData();
     void portReady();
     void deviceStateChanged(int);

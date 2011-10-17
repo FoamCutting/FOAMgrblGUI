@@ -45,6 +45,8 @@ private:
     Settings *settings;
     ArduinoIO *arduino;
     int gridScale;
+    QFile *GCodeFile;
+    void StreamFile();
 
 public:
     explicit GrblCage(QWidget *parent = 0);
@@ -73,8 +75,6 @@ private slots:
 
     void on_jogXnegative_clicked();
 
-    void on_needleStartStop_clicked();
-
     void on_jogXpositive_clicked();
 
     void on_jogXYnegative_clicked();
@@ -82,6 +82,8 @@ private slots:
     void on_jogYnegative_clicked();
 
     void on_jogXpositiveYnegative_clicked();
+
+    void on_needleStartStop_toggled(bool checked);
 
 signals:
     void GCodeDocumentAltered();

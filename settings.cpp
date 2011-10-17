@@ -252,9 +252,8 @@ void Settings::GetPlotSettings()
 {
     QDataStream fileStream;
     OpenFileStream(&fileStream);
-//    fileStream.skipRawData(sizeof(ArduinoIO::grblSettings);
     ArduinoIO::grblSettings dummy;
-    fileStream >> dummy;
+    fileStream >> dummy;        //advance to the end of grblSettings
     if(fileStream.atEnd())
     {
         qDebug() << "file still empty";
@@ -270,9 +269,8 @@ void Settings::PutPlotSettings()
 {
     QDataStream fileStream;
     OpenFileStream(&fileStream);
-//    fileStream.skipRawData(sizeof(ArduinoIO::grblSettings) + 100);
     ArduinoIO::grblSettings dummy;
-    fileStream >> dummy;
+    fileStream >> dummy;        //advance to the end of grblSettings
     fileStream << userPlotSettings;
     CloseFileStream();
 }

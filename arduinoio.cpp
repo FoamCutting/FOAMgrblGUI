@@ -181,6 +181,10 @@ void ArduinoIO::onReadyRead()
         return;
     else if(data == "Stored new setting")
         return;
+    else if(data == "ok")
+    {
+        emit ok();
+    }
     else if(data == "Grbl 0.6b") {
         currentGrblSettings.grblVersion = 1;
         SetGrblVersion(1);
@@ -233,7 +237,8 @@ void ArduinoIO::GetDeviceGrblSettings(int arduinoState)
          this << QString("\r\n\r\n");
          this << QString("$\n");
          disconnect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(GetDeviceGrblSettings(int)));
-         QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings2()));
+//         QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings2()));
+         connect(this, SIGNAL(ok()), this, SLOT(GetDeviceGrblSettings2()));
          return;
      }
      else if(DeviceState() > ArduinoIO::DISCONNECTED) {
@@ -249,8 +254,11 @@ void ArduinoIO::GetDeviceGrblSettings(int arduinoState)
 void ArduinoIO::GetDeviceGrblSettings2()
 {
     qDebug() << "GetDeviceGrblSettings2";
+
     QString line = getLine();
     int escape = 0;
+    disconnect(this, SIGNAL(ok()), this, SLOT(GetDeviceGrblSettings2()));
+
     while(line != "ok")
     {
         if(line != "")

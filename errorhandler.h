@@ -27,6 +27,7 @@ public:
          UnexpectedSyntax,
          FileIsAbsolute,
          FileIsIncremental,
+         FileNotOpen,
          DocumentNotOpen,
          UnevenArcScalingNotSupported,
          SaveFailed,

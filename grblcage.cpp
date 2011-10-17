@@ -269,10 +269,10 @@ void GrblCage::on_actionOpen_GCode_File_triggered()
     }
     else
     {
-        QFile *file = new QFile(fileName);
-        file->open(QIODevice::ReadWrite);
+        GCodeFile = new QFile(fileName);
+        GCodeFile->open(QIODevice::ReadWrite);
+        GCodeDocument->setPlainText(GCodeFile->readAll());
 
-        GCodeDocument->setPlainText(file->readAll());
         plotter->setDocument(GCodeDocument);
         editor->setDocument(GCodeDocument);
         emit GCodeDocumentAltered();
@@ -360,9 +360,9 @@ void GrblCage::on_actionRemove_Line_Numbers_triggered()
     err->assessErrorList();
 }
 
-void GrblCage::on_needleStartStop_clicked()
+void GrblCage::on_needleStartStop_toggled(bool checked)
 {
-
+    StreamFile();
 }
 
 void GrblCage::on_jogYpositive_clicked()
@@ -394,7 +394,6 @@ void GrblCage::on_jogXnegative_clicked()
     arduino->SeekRelative(-_JogIncrement, 0, 0);
 }
 
-
 void GrblCage::on_jogXpositive_clicked()
 {
     arduino->SeekRelative(_JogIncrement, 0, 0);
@@ -414,3 +413,21 @@ void GrblCage::on_jogXpositiveYnegative_clicked()
 {
     arduino->SeekRelative(_JogIncrement, -_JogIncrement, 0);
 }
+
+void GrblCage::StreamFile()
+{
+    if(gcodeFileOpen) {
+        QString response = "ok";
+        GCodeFile->seek(0);
+        char buffer[100];
+        while(response == "ok") {
+            GCodeFile->readLine(buffer, sizeof(buffer));
+            arduino << QString(buffer);
+            response = arduino->getLine();
+            qDebug() << buffer << response;
+        }
+    }
+    else
+        err->pushError(ErrorHandler::FileNotOpen);
+}
+
