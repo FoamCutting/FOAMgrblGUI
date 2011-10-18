@@ -29,6 +29,8 @@ public:
          FileIsIncremental,
          GCodeFileNotOpen,
          UnevenArcScalingNotSupported,
+         UnsupportedStatement,
+         IncompatibleFile,
          SaveFailed,
          LineNumbersExist,
          NoArduinoConnected};

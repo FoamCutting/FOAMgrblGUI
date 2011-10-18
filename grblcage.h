@@ -5,6 +5,7 @@
 #include <QTextDocument>
 #include <QTextDocumentWriter>
 #include <QFileDialog>
+//#include <QDir>
 #include <QGraphicsScene>
 #include <QGraphicsView>
 #include "settings.h"
@@ -68,22 +69,18 @@ private slots:
     void on_redo_clicked();
     void on_actionNew_GCode_File_triggered();
     void on_jogYpositive_clicked();
-
     void on_jogXYpositive_clicked();
-
     void on_jogXnegativeYpositive_clicked();
-
     void on_jogXnegative_clicked();
-
     void on_jogXpositive_clicked();
-
     void on_jogXYnegative_clicked();
-
     void on_jogYnegative_clicked();
-
     void on_jogXpositiveYnegative_clicked();
-
     void on_needleStartStop_toggled(bool checked);
+
+    void on_autoStart_pButton_clicked();
+
+    void on_actionSave_as_triggered();
 
 signals:
     void GCodeDocumentAltered();
@@ -97,6 +94,7 @@ public slots:
     void panEnd();
     void AdjustForResize();
     void GetGridScale();
+    void StreamFileLoop();
 };
 
 #endif // GRBLCAGE_H

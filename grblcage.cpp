@@ -17,9 +17,9 @@ GrblCage::GrblCage(QWidget *parent) :
     settings->SetErrorHandler(err);
     settings->FindMachine();
 
+    GCodeFile = new QFile;
     GCodeDocument = new QTextDocument;
     panning = false;
-    gcodeFileOpen = false;
     ui->gcodePlotter->setMouseTracking(true);
     ui->gcodePlotter->viewport()->installEventFilter(interceptor);
     ui->gcodePlotter->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
@@ -61,7 +61,7 @@ void GrblCage::GetGridScale()
 
 void GrblCage::mouseMovement(QPoint pos)
 {
-    if(gcodeFileOpen)
+    if(GCodeFile->isOpen())
     {
         if(panning && this->isEnabled())
         {
@@ -222,6 +222,8 @@ void GrblCage::AdjustForResize()
 
 void GrblCage::on_actionNew_GCode_File_triggered()
 {
+    GCodeFile->setFileName("tmp");
+    GCodeFile->open(QIODevice::ReadWrite);
     GCodeDocument->setPlainText("");
     plotter->setFile(GCodeFile);
     editor->setDocument(GCodeDocument);
@@ -231,7 +233,6 @@ void GrblCage::on_actionNew_GCode_File_triggered()
     ui->gcodePlotter->fitInView(plotter->scene()->sceneRect(), Qt::KeepAspectRatioByExpanding);
     ui->gcodeEditor->setDocument(editor->document());
     SetCenter(QPointF((ui->gcodePlotter->sceneRect().width())/2, -(ui->gcodePlotter->sceneRect().height())/2));
-    gcodeFileOpen = true;
 }
 
 int GrblCage::saveGCode(QString fileName)
@@ -245,13 +246,29 @@ int GrblCage::saveGCode(QString fileName)
 
 void GrblCage::on_actionSave_GCode_File_triggered()
 {
-    if(gcodeFileOpen) {
-        saveGCode(QFileDialog::getSaveFileName(this,
-                                               "Save Files",
-                                               "*.txt",
-                                               "Gcode Files (*.ngc *.txt *.nc *.GC)",
-                                               0,
-                                               QFileDialog::DontUseNativeDialog));
+    if(GCodeFile->fileName() == "tmp") {
+        on_actionSave_as_triggered();
+    }
+    else {
+        GCodeSaver = new QTextDocumentWriter(GCodeFile->fileName());
+        if((!GCodeSaver->write(ui->gcodeEditor->document())))
+            err->pushError(ErrorHandler::SaveFailed);
+        else
+            err->pushError(ErrorHandler::Okay);
+    }
+}
+
+void GrblCage::on_actionSave_as_triggered()
+{
+    if(GCodeFile->isOpen()) {
+        int success = saveGCode(QFileDialog::getSaveFileName(this,
+                                                             "Save Files",
+                                                             GCodeFile->fileName(),
+                                                             "Gcode Files (*.ngc *.txt *.nc *.GC)",
+                                                             0,
+                                                             QFileDialog::DontUseNativeDialog));
+        if(success == ErrorHandler::Okay && GCodeFile->fileName() == "tmp")
+            GCodeFile->remove();
     }
 }
 
@@ -269,11 +286,14 @@ void GrblCage::on_actionOpen_GCode_File_triggered()
     }
     else
     {
-        GCodeFile = new QFile(fileName);
+        if(GCodeFile->isOpen() && (GCodeFile->fileName() == "tmp"))
+            GCodeFile->remove();
+        GCodeFile->setFileName(fileName);
         GCodeFile->open(QIODevice::ReadWrite);
         GCodeDocument->setPlainText(GCodeFile->readAll());
 
         plotter->setFile(GCodeFile);
+        editor->setFile(GCodeFile);
         editor->setDocument(GCodeDocument);
         emit GCodeDocumentAltered();
 
@@ -281,8 +301,8 @@ void GrblCage::on_actionOpen_GCode_File_triggered()
         ui->gcodePlotter->fitInView(plotter->scene()->sceneRect(), Qt::KeepAspectRatioByExpanding);
         ui->gcodeEditor->setDocument(editor->document());
         SetCenter(QPointF((ui->gcodePlotter->sceneRect().width())/2, -(ui->gcodePlotter->sceneRect().height())/2));
-        gcodeFileOpen = true;
     }
+    qDebug() << "File name is " << GCodeFile->fileName();
 }
 
 void GrblCage::on_actionSettings_triggered()
@@ -362,7 +382,6 @@ void GrblCage::on_actionRemove_Line_Numbers_triggered()
 
 void GrblCage::on_needleStartStop_toggled(bool checked)
 {
-    StreamFile();
 }
 
 void GrblCage::on_jogYpositive_clicked()
@@ -416,18 +435,39 @@ void GrblCage::on_jogXpositiveYnegative_clicked()
 
 void GrblCage::StreamFile()
 {
-    if(gcodeFileOpen) {
-        QString response = "ok";
+    if(GCodeFile->isOpen()) {
+        int count = editor->countLines();
+        ui->cutProgress_pBar->setMaximum(count);
         GCodeFile->seek(0);
-        char buffer[100];
-        while(response == "ok") {
-            GCodeFile->readLine(buffer, sizeof(buffer));
-            arduino << QString(buffer);
-            response = arduino->getLine();
-            qDebug() << buffer << response;
-        }
+        char buffer[100];     
+        GCodeFile->readLine(buffer, sizeof(buffer));
+        qDebug() << buffer;
+        arduino << QString(buffer);
+        connect(arduino, SIGNAL(ok()), this, SLOT(StreamFileLoop()));
     }
     else
         err->pushError(ErrorHandler::GCodeFileNotOpen);
 }
+
+void GrblCage::StreamFileLoop()
+{
+    ui->cutProgress_pBar->setValue(ui->cutProgress_pBar->value()+1);
+    char buffer[100];
+    GCodeFile->readLine(buffer, sizeof(buffer));
+    arduino << QString(buffer);
+    qDebug() << "--" << buffer;
+//    ui->xPos_lcdNum       //update current head position
+//    ui->yPos_lcdNum
+    if(GCodeFile->atEnd()){
+        qDebug() << "StreamingFinished";
+        ui->cutProgress_pBar->reset();
+        disconnect(arduino, SIGNAL(ok()), this, SLOT(StreamFileLoop()));
+    }
+}
+
+void GrblCage::on_autoStart_pButton_clicked()
+{
+    StreamFile();
+}
+
 

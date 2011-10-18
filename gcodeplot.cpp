@@ -227,7 +227,7 @@ void GCodePlot::calculateArcElements(float x1, float y1, float x2, float y2, flo
 {
     float x = x2 - x1;
     float y = y2 - y1;
-    if(radius < (sqrt(x*x + y*y)/2))         //check for and ignore arcs with--- bad radius values
+    if(radius < (sqrt(x*x + y*y)/2))         //check for and ignore arcs with bad radius values
         return;
     float h_x2_div_d = sqrt(4 * radius*radius- x*x - y*y)/sqrt(x*x + y*y);
 
