@@ -235,23 +235,14 @@ void GrblCage::on_actionNew_GCode_File_triggered()
     SetCenter(QPointF((ui->gcodePlotter->sceneRect().width())/2, -(ui->gcodePlotter->sceneRect().height())/2));
 }
 
-int GrblCage::saveGCode(QString fileName)
-{
-    GCodeSaver = new QTextDocumentWriter(fileName);
-    if((!GCodeSaver->write(ui->gcodeEditor->document())))
-        return ErrorHandler::SaveFailed;
-    else
-        return ErrorHandler::Okay;
-}
-
 void GrblCage::on_actionSave_GCode_File_triggered()
 {
     if(GCodeFile->fileName() == "tmp") {
         on_actionSave_as_triggered();
     }
     else {
-        GCodeSaver = new QTextDocumentWriter(GCodeFile->fileName());
-        if((!GCodeSaver->write(ui->gcodeEditor->document())))
+       QTextDocumentWriter GCodeSaver(GCodeFile->fileName());
+        if((!GCodeSaver.write(ui->gcodeEditor->document())))
             err->pushError(ErrorHandler::SaveFailed);
         else
             err->pushError(ErrorHandler::Okay);
@@ -270,6 +261,15 @@ void GrblCage::on_actionSave_as_triggered()
         if(success == ErrorHandler::Okay && GCodeFile->fileName() == "tmp")
             GCodeFile->remove();
     }
+}
+
+int GrblCage::saveGCode(QString fileName)
+{
+   QTextDocumentWriter GCodeSaver(fileName);
+    if((!GCodeSaver.write(ui->gcodeEditor->document())))
+        return ErrorHandler::SaveFailed;
+    else
+        return ErrorHandler::Okay;
 }
 
 void GrblCage::on_actionOpen_GCode_File_triggered()
@@ -469,5 +469,3 @@ void GrblCage::on_autoStart_pButton_clicked()
 {
     StreamFile();
 }
-
-

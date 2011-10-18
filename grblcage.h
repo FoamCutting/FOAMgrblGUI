@@ -34,7 +34,6 @@ private:
     QTextDocument* GCodeDocument;
     ErrorHandler* err;
     EventFilterizer* interceptor;
-    QTextDocumentWriter* GCodeSaver;
     bool gcodeFileOpen;
     bool panning;
     QPoint lastPanPoint;
@@ -77,9 +76,7 @@ private slots:
     void on_jogYnegative_clicked();
     void on_jogXpositiveYnegative_clicked();
     void on_needleStartStop_toggled(bool checked);
-
     void on_autoStart_pButton_clicked();
-
     void on_actionSave_as_triggered();
 
 signals:
