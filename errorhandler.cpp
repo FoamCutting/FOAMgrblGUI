@@ -6,6 +6,8 @@ ErrorHandler::ErrorHandler(QWidget *parent) :
     ui(new Ui::ErrorHandler)
 {
     ui->setupUi(this);
+    Qt::WindowFlags flags = ((this->windowFlags()) | Qt::WindowStaysOnTopHint);
+    this->setWindowFlags(flags);
 }
 
 ErrorHandler::~ErrorHandler()
@@ -64,6 +66,8 @@ void ErrorHandler::assessErrorList()
         case UnevenArcScalingNotSupported:
             display("This program does not support unequal x and y scaling for g code files that use arc interpolation\n");
             break;
+        case UnsavedChanges:
+            display("There are unsaved changes to the current file. You must save before streaming.\n");
         }
     }
     errorList.clear();

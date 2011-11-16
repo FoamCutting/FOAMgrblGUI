@@ -4,7 +4,6 @@
 GCodePlot::GCodePlot(QObject *parent) :
     QObject(parent)
 {
-    GCodeFileSet = false;
     GCodeScene = new QGraphicsScene;
     coordinateMode = Absolute;
     arcCenterMode = Incremental;
@@ -23,31 +22,9 @@ void GCodePlot::setSettings(Settings *s)
 
 void GCodePlot::applySettings()
 {
-//    qDebug() << "applySettings";
-//    settings->GetPlotSettings(&plot);
     plot = settings->PlotSettings();
     scaleFactor = UNITS_PER_INCH;
     arcCenterMode = Incremental;
-}
-
-void GCodePlot::refreshView()
-{
-    if(GCodeFileSet)
-    {
-        GCodeScene->clear();
-        processGCodes();
-    }
-}
-
-void GCodePlot::setFile(QFile *file)
-{
-    GCodeFile = file;
-    GCodeFileSet = true;
-}
-
-QFile* GCodePlot::file()
-{
-    return GCodeFile;
 }
 
 QGraphicsScene* GCodePlot::scene()
@@ -57,6 +34,7 @@ QGraphicsScene* GCodePlot::scene()
 
 void GCodePlot::drawGrid()
 {
+    GCodeScene->clear();
     float gridSizeX, gridSizeY;
     int gridIncrement;
     if(plot.gridUnits == INCHES)
@@ -80,27 +58,24 @@ void GCodePlot::drawGrid()
     GCodeScene->addLine(gridSizeX, 0, gridSizeX, gridSizeY*(-1), drawPen);
 }
 
-void GCodePlot::processGCodes()
+void GCodePlot::processGCodes(QString gcodeString)
 {
     applySettings();
     drawGrid();
-//    qDebug() << plot.sizeX;
-//    qDebug() << plot.sizeY;
-//    qDebug() << plot.gridUnits;
-
+    timer.start();
     float startCoord[2] = {0};
     float endCoord[2] = {0};
     float arcCenter[2] = {0};
     float radius = 0;
-    GCodeFile->seek(0);
 
-    while(!(GCodeFile->atEnd()))
+    QTextStream gcodeStream(&gcodeString);
+
+    while(!(gcodeStream.atEnd()))
     {
-        char line[100];
         QList<QString> codeLineList;
         QString command;
-        GCodeFile->readLine(line, sizeof(line));
-        codeLineList = QString(line).toUpper().trimmed().split(" ", QString::SkipEmptyParts);
+        QString line = gcodeStream.readLine();
+        codeLineList = line.toUpper().trimmed().split(" ", QString::SkipEmptyParts);
         for(int i = 0; i<(codeLineList.size()); i++)
         {
             command = codeLineList[i].trimmed();
@@ -109,6 +84,15 @@ void GCodePlot::processGCodes()
             {
                 drawMode = None;
                 break;
+            }
+            else if(command[0] == '[')
+            {
+                drawMode = None;
+                break;
+            }
+            else if(command[0] == 'N')
+            {
+
             }
             else if(command[0] == 'G')
             {
@@ -216,6 +200,7 @@ void GCodePlot::processGCodes()
             startCoord[1] = endCoord[1];
         }
     }
+    qDebug() << "run time is:" << timer.elapsed();
 }
 
 void GCodePlot::drawLine(float x1, float y1, float x2, float y2)

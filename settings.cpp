@@ -369,7 +369,7 @@ void Settings::RefreshPortList()
     }
 }
 
-void Settings::PutDeviceGrblSettings()
+void Settings::PutDeviceGrblSettings()      //maybe write this functionality into the arduino class
 {
     arduino->Flush();
     writingToArduino = true;
@@ -413,6 +413,9 @@ void Settings::PutDeviceGrblSettings2()
     case 7:
         arduino << QString("$7 = ").append(QString("").setNum(userGrblSettings.stepInvert)).append(QString("\n"));
         count ++;
+        if(arduino->currentGrblSettings.grblVersion == 0) {
+            disconnect(arduino, SIGNAL(newData()), this, SLOT(PutDeviceGrblSettings2()));
+        }
         break;
     case 8:
         arduino << QString("$8 = ").append(QString("").setNum(userGrblSettings.acceleration)).append(QString("\n"));
@@ -428,24 +431,6 @@ void Settings::PutDeviceGrblSettings2()
 //    qDebug() << count;
 }
 
-void Settings::CompareGrblSettings(int state)
-{
-    qDebug() << "COMPAREGRBLSETTINGS";
-
-    bool result;
-
-    if(state != ArduinoIO::READY)
-        return;
-    disconnect(arduino, SIGNAL(deviceStateChanged(int)), this, SLOT(CompareGrblSettings(int)));
-    qDebug() << "local" << endl << userGrblSettings.grblVersion << endl << userGrblSettings.stepsX << endl << userGrblSettings.stepsY << endl << userGrblSettings.stepsZ << endl << userGrblSettings.stepPulse << endl << userGrblSettings.feedRate << endl << userGrblSettings.seekRate << endl << userGrblSettings.arcSegment << endl << userGrblSettings.stepInvert << endl << userGrblSettings.acceleration << endl << userGrblSettings.cornering << endl;
-    qDebug() << "device" << endl << arduino->currentGrblSettings.grblVersion << endl << arduino->currentGrblSettings.stepsX << endl << arduino->currentGrblSettings.stepsY << endl << arduino->currentGrblSettings.stepsZ << endl << arduino->currentGrblSettings.stepPulse << endl << arduino->currentGrblSettings.feedRate << endl << arduino->currentGrblSettings.seekRate << endl << arduino->currentGrblSettings.arcSegment << endl << arduino->currentGrblSettings.stepInvert << endl << arduino->currentGrblSettings.acceleration << endl << arduino->currentGrblSettings.cornering << endl;
-
-    if(!(userGrblSettings == arduino->currentGrblSettings))
-        result = 0;
-    else
-        result = 1;
-    emit CompareGrblSettingsResult(result);
-}
 
 void Settings::FindMachine()
 {
@@ -458,6 +443,35 @@ void Settings::FindMachine()
     connect(arduino, SIGNAL(deviceStateChanged(int)), this, SLOT(CompareGrblSettings(int)));
     connect(this, SIGNAL(CompareGrblSettingsResult(bool)), this, SLOT(FindMachine2(bool)));
     qDebug() << "FINDMACHINEEND";
+}
+
+void Settings::CompareGrblSettings(int state)
+{
+    qDebug() << "COMPAREGRBLSETTINGS";
+
+    bool result;
+
+    if(state != ArduinoIO::READY)
+        return;
+    disconnect(arduino, SIGNAL(deviceStateChanged(int)), this, SLOT(CompareGrblSettings(int)));
+    qDebug() << "local ==" << "device" << endl
+             << userGrblSettings.grblVersion << "=="<< arduino->currentGrblSettings.grblVersion << endl
+             << userGrblSettings.stepsX << "==" << arduino->currentGrblSettings.stepsX << endl
+             << userGrblSettings.stepsY << "==" << arduino->currentGrblSettings.stepsY << endl
+             << userGrblSettings.stepsZ  << "==" << arduino->currentGrblSettings.stepsZ << endl
+             << userGrblSettings.stepPulse << "==" << arduino->currentGrblSettings.stepPulse << endl
+             << userGrblSettings.feedRate << "==" << arduino->currentGrblSettings.feedRate << endl
+             << userGrblSettings.seekRate << "==" << arduino->currentGrblSettings.seekRate << endl
+             << userGrblSettings.arcSegment << "==" << arduino->currentGrblSettings.arcSegment << endl
+             << userGrblSettings.stepInvert  << "==" << arduino->currentGrblSettings.stepInvert << endl
+             << userGrblSettings.acceleration  << "==" << arduino->currentGrblSettings.acceleration << endl
+             << userGrblSettings.cornering << "==" << arduino->currentGrblSettings.cornering << endl;
+
+    if(!(userGrblSettings == arduino->currentGrblSettings))
+        result = 0;
+    else
+        result = 1;
+    emit CompareGrblSettingsResult(result);
 }
 
 void Settings::FindMachine2(bool result)
@@ -485,27 +499,6 @@ void Settings::FindMachine2(bool result)
     }
 }
 
-void Settings::on_settings_clicked()
-{
-//    arduino = new ArduinoIO;
-//    arduino->SetPortName(ui->arduinoPort_combo->currentText());
-//    arduino->OpenPort();
-//    QString data;
-//    arduino << QString("\r\n\r\n");
-//    arduino << QString("$\n");
-    PutDeviceGrblSettings();
-}
-
-void Settings::on_report_clicked()
-{
-//    for(int i = 15; i>0; i--)
-//    {
-//        qDebug() << arduino->getLine();
-//    }
-//    GetDeviceGrblSettings();
-//    PlotDefaults();
-}
-
 void Settings::on_refreshArduinoPortList_tButton_clicked()
 {
     RefreshPortList();
@@ -518,16 +511,30 @@ void Settings::on_grblVerson_combo_currentIndexChanged(int index)   //disable se
         ui->acceleration_label->setEnabled(false);
         ui->maxJerk_dspinbox->setEnabled(false);
         ui->maxJerk_label->setEnabled(false);
+        ui->maxJerk_label->setText("Max Jerk (delta mm/min)");
     }
     else if(index == 1) {
         ui->acceleration_dspinbox->setEnabled(true);
         ui->acceleration_label->setEnabled(true);
         ui->maxJerk_dspinbox->setEnabled(true);
         ui->maxJerk_label->setEnabled(true);
+        ui->maxJerk_label->setText("Max Jerk (delta mm/min)");
+    }
+    else if(index == 2) {
+        ui->acceleration_dspinbox->setEnabled(true);
+        ui->acceleration_label->setEnabled(true);
+        ui->maxJerk_dspinbox->setEnabled(true);
+        ui->maxJerk_label->setEnabled(true);
+        ui->maxJerk_label->setText("Cornering Junction Deviance (mm)");
     }
 }
 
 void Settings::on_plotDefaults_pButton_clicked()
 {
     PlotDefaults();
+}
+
+void Settings::on_upload_pButton_clicked()
+{
+    PutDeviceGrblSettings();
 }

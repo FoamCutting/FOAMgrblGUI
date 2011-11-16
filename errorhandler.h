@@ -28,6 +28,7 @@ public:
          FileIsAbsolute,
          FileIsIncremental,
          GCodeFileNotOpen,
+         UnsavedChanges,
          UnevenArcScalingNotSupported,
          UnsupportedStatement,
          IncompatibleFile,

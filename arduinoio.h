@@ -70,6 +70,7 @@ public:
 
 signals:
     void ok();
+    void error();
     void newData();
     void portReady();
     void deviceStateChanged(int);

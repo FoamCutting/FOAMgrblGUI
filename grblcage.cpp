@@ -16,23 +16,24 @@ GrblCage::GrblCage(QWidget *parent) :
     settings->SetArduino(arduino);
     settings->SetErrorHandler(err);
     settings->FindMachine();
+    streamInProgress = 0;
 
     GCodeFile = new QFile;
     GCodeDocument = new QTextDocument;
+//    connect(GCodeDocument, SIGNAL(contentsChanged()), this, SLOT(refreshPlot()));     //caused way too many refreshes
     panning = false;
     ui->gcodePlotter->setMouseTracking(true);
     ui->gcodePlotter->viewport()->installEventFilter(interceptor);
     ui->gcodePlotter->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
-    QObject::connect(this, SIGNAL(GCodeDocumentAltered()),plotter,SLOT(refreshView()));
     QObject::connect(interceptor, SIGNAL(scrollIntercept(float,QPoint)),this,SLOT(scaleView(float,QPoint)));
-    QObject::connect(interceptor, SIGNAL(mouseMoveIntercept(QPoint)),this,SLOT(mouseMovement(QPoint)));\
+    QObject::connect(interceptor, SIGNAL(mouseMoveIntercept(QPoint)),this,SLOT(mouseMovement(QPoint)));
     QObject::connect(interceptor, SIGNAL(mouseMiddleClickIntercept(QPoint)),this,SLOT(panStart(QPoint)));
     QObject::connect(interceptor, SIGNAL(mouseMiddleReleaseIntercept()),this,SLOT(panEnd()));
     QObject::connect(interceptor, SIGNAL(resizeIntercept()),this,SLOT(AdjustForResize()));
 
     QObject::connect(settings,SIGNAL(settingsHidden()),this,SLOT(EnableMainWindow()));
-    QObject::connect(settings, SIGNAL(plotSettingsChanged()), plotter, SLOT(refreshView()));
+    QObject::connect(settings, SIGNAL(plotSettingsChanged()), this, SLOT(refreshPlot()));
     QObject::connect(settings, SIGNAL(plotSettingsChanged()), this, SLOT(GetGridScale()));
     GetGridScale();
 
@@ -52,8 +53,7 @@ GrblCage::~GrblCage()
 
 void GrblCage::GetGridScale()
 {
-    Settings::plotSettings plotSet = settings->PlotSettings();
-    if(plotSet.gridUnits == 0)
+    if(settings->PlotSettings().gridUnits == 0)
         gridScale = 254;
     else
         gridScale = 100;
@@ -102,6 +102,11 @@ void GrblCage::DisableMainWindow()
     ui->GCodeEditorDockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
     ui->ControlsDockWidget->setFeatures(QDockWidget::NoDockWidgetFeatures);
     this->setEnabled(false);
+}
+
+void GrblCage::refreshPlot()
+{
+    plotter->processGCodes(GCodeDocument->toPlainText());
 }
 
 /** ******************** (Pan/Zoom Functions) ******************** **/
@@ -222,11 +227,13 @@ void GrblCage::AdjustForResize()
 
 void GrblCage::on_actionNew_GCode_File_triggered()
 {
+//    if(CheckForUnsavedChanges())
+
     GCodeFile->setFileName("tmp");
     GCodeFile->open(QIODevice::ReadWrite);
     GCodeDocument->setPlainText("");
-    plotter->setFile(GCodeFile);
     editor->setDocument(GCodeDocument);
+    plotter->processGCodes(GCodeDocument->toPlainText());
     emit GCodeDocumentAltered();
 
     ui->gcodePlotter->setScene(plotter->scene());
@@ -241,35 +248,62 @@ void GrblCage::on_actionSave_GCode_File_triggered()
         on_actionSave_as_triggered();
     }
     else {
-       QTextDocumentWriter GCodeSaver(GCodeFile->fileName());
-        if((!GCodeSaver.write(ui->gcodeEditor->document())))
-            err->pushError(ErrorHandler::SaveFailed);
-        else
-            err->pushError(ErrorHandler::Okay);
+        err->pushError(saveGCode(GCodeFile->fileName()));
     }
 }
 
 void GrblCage::on_actionSave_as_triggered()
 {
+    QString FileName;
     if(GCodeFile->isOpen()) {
-        int success = saveGCode(QFileDialog::getSaveFileName(this,
-                                                             "Save Files",
-                                                             GCodeFile->fileName(),
-                                                             "Gcode Files (*.ngc *.txt *.nc *.GC)",
-                                                             0,
-                                                             QFileDialog::DontUseNativeDialog));
+        FileName = QFileDialog::getSaveFileName(this,
+                                                "Save Files",
+                                                GCodeFile->fileName(),
+                                                "Gcode Files (*.ngc *.txt *.nc *.GC)",
+                                                0,
+                                                QFileDialog::DontUseNativeDialog);
+        int success = saveGCode(FileName);
         if(success == ErrorHandler::Okay && GCodeFile->fileName() == "tmp")
             GCodeFile->remove();
+        GCodeFile->close();
+        GCodeFile->setFileName(FileName);
+        GCodeFile->open(QIODevice::ReadWrite);
+        GCodeDocument->setPlainText(GCodeFile->readAll());
+
+        editor->setFile(GCodeFile);
+        editor->setDocument(GCodeDocument);
+        plotter->processGCodes(GCodeDocument->toPlainText());
+        emit GCodeDocumentAltered();
+        ui->gcodePlotter->setScene(plotter->scene());
     }
 }
 
 int GrblCage::saveGCode(QString fileName)
 {
    QTextDocumentWriter GCodeSaver(fileName);
+   GCodeSaver.setFormat("plaintext");
     if((!GCodeSaver.write(ui->gcodeEditor->document())))
         return ErrorHandler::SaveFailed;
     else
         return ErrorHandler::Okay;
+}
+
+int GrblCage::openGCode(QString fileName)
+{
+    if(GCodeFile->isOpen() && (GCodeFile->fileName() == "tmp"))
+        GCodeFile->remove();
+    GCodeFile->setFileName(fileName);
+    GCodeFile->open(QIODevice::ReadWrite);
+    GCodeDocument->setPlainText(GCodeFile->readAll());
+
+    editor->setFile(GCodeFile);
+    editor->setDocument(GCodeDocument);
+    plotter->processGCodes(GCodeDocument->toPlainText());
+    emit GCodeDocumentAltered();
+    ui->gcodePlotter->setScene(plotter->scene());
+    ui->gcodePlotter->fitInView(plotter->scene()->sceneRect(), Qt::KeepAspectRatioByExpanding);
+    ui->gcodeEditor->setDocument(editor->document());
+    SetCenter(QPointF((ui->gcodePlotter->sceneRect().width())/2, -(ui->gcodePlotter->sceneRect().height())/2));
 }
 
 void GrblCage::on_actionOpen_GCode_File_triggered()
@@ -286,21 +320,7 @@ void GrblCage::on_actionOpen_GCode_File_triggered()
     }
     else
     {
-        if(GCodeFile->isOpen() && (GCodeFile->fileName() == "tmp"))
-            GCodeFile->remove();
-        GCodeFile->setFileName(fileName);
-        GCodeFile->open(QIODevice::ReadWrite);
-        GCodeDocument->setPlainText(GCodeFile->readAll());
-
-        plotter->setFile(GCodeFile);
-        editor->setFile(GCodeFile);
-        editor->setDocument(GCodeDocument);
-        emit GCodeDocumentAltered();
-
-        ui->gcodePlotter->setScene(plotter->scene());
-        ui->gcodePlotter->fitInView(plotter->scene()->sceneRect(), Qt::KeepAspectRatioByExpanding);
-        ui->gcodeEditor->setDocument(editor->document());
-        SetCenter(QPointF((ui->gcodePlotter->sceneRect().width())/2, -(ui->gcodePlotter->sceneRect().height())/2));
+        openGCode(fileName);
     }
     qDebug() << "File name is " << GCodeFile->fileName();
 }
@@ -326,6 +346,7 @@ void GrblCage::on_editMode_toggled(bool checked)
 
 void GrblCage::on_refresh_clicked()
 {
+    plotter->processGCodes(GCodeDocument->toPlainText());
     emit GCodeDocumentAltered();
 }
 
@@ -345,14 +366,15 @@ void GrblCage::on_redo_clicked()
 
 void GrblCage::on_actionScale_G_Code_triggered()
 {
-
     ScaleDialog *sDialog = new ScaleDialog(editor, plotter);
+    connect(sDialog, SIGNAL(GCodeDocumentAltered()), this, SLOT(refreshPlot()));
     sDialog->show();
 }
 
 void GrblCage::on_actionOffset_GCode_triggered()
 {
     OffsetDialog *oDialog = new OffsetDialog(editor, plotter);
+    connect(oDialog, SIGNAL(GCodeDocumentAltered()), this, SLOT(refreshPlot()));
     oDialog->show();
 }
 
@@ -382,68 +404,72 @@ void GrblCage::on_actionRemove_Line_Numbers_triggered()
 
 void GrblCage::on_needleStartStop_toggled(bool checked)
 {
+    qDebug() << arduino->DeviceState();
 }
 
 void GrblCage::on_jogYpositive_clicked()
 {
-//    settings->FindMachine();
-    arduino->SeekRelative(0, _JogIncrement, 0);
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
+        arduino->SeekRelative(0, _JogIncrement, 0);
 }
 
 void GrblCage::on_jogXYpositive_clicked()
 {
-//    arduino->ClosePort();
-    arduino->SeekRelative(_JogIncrement, _JogIncrement, 0);
-
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
+     arduino->SeekRelative(_JogIncrement, _JogIncrement, 0);
 }
 
 void GrblCage::on_jogXnegativeYpositive_clicked()
 {
-//    arduino->GetPorts();
-//    if(arduino->ports.isEmpty())
-//        return;
-//    arduino->SetPortName(arduino->ports.at(0).physName);
-//    arduino->OpenPort();
-    arduino->SeekRelative(-_JogIncrement, _JogIncrement, 0);
-
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
+        arduino->SeekRelative(-_JogIncrement, _JogIncrement, 0);
 }
 
 void GrblCage::on_jogXnegative_clicked()
 {
-    arduino->SeekRelative(-_JogIncrement, 0, 0);
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
+        arduino->SeekRelative(-_JogIncrement, 0, 0);
 }
 
 void GrblCage::on_jogXpositive_clicked()
 {
-    arduino->SeekRelative(_JogIncrement, 0, 0);
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
+        arduino->SeekRelative(_JogIncrement, 0, 0);
 }
 
 void GrblCage::on_jogXYnegative_clicked()
 {
-    arduino->SeekRelative(-_JogIncrement, -_JogIncrement, 0);
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
+        arduino->SeekRelative(-_JogIncrement, -_JogIncrement, 0);
 }
 
 void GrblCage::on_jogYnegative_clicked()
 {
-    arduino->SeekRelative(0, -_JogIncrement, 0);
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
+        arduino->SeekRelative(0, -_JogIncrement, 0);
 }
 
 void GrblCage::on_jogXpositiveYnegative_clicked()
 {
-    arduino->SeekRelative(_JogIncrement, -_JogIncrement, 0);
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
+        arduino->SeekRelative(_JogIncrement, -_JogIncrement, 0);
 }
 
 void GrblCage::StreamFile()
 {
+    if(streamInProgress)
+        return;
     if(GCodeFile->isOpen()) {
-        int count = editor->countLines();
+        if(CheckForUnsavedChanges())
+            return;
+        StreamList = PreProcess().split('\n', QString::SkipEmptyParts);
+        int count = StreamList.length();
         ui->cutProgress_pBar->setMaximum(count);
-        GCodeFile->seek(0);
-        char buffer[100];     
-        GCodeFile->readLine(buffer, sizeof(buffer));
-        qDebug() << buffer;
-        arduino << QString(buffer);
+        arduino << QString("(starting transfer)\n");
+        lineCount = 0;
         connect(arduino, SIGNAL(ok()), this, SLOT(StreamFileLoop()));
+        connect(arduino, SIGNAL(error()), this, SLOT(StreamFileTerminate()));
+        streamInProgress = 1;
     }
     else
         err->pushError(ErrorHandler::GCodeFileNotOpen);
@@ -452,20 +478,113 @@ void GrblCage::StreamFile()
 void GrblCage::StreamFileLoop()
 {
     ui->cutProgress_pBar->setValue(ui->cutProgress_pBar->value()+1);
-    char buffer[100];
-    GCodeFile->readLine(buffer, sizeof(buffer));
-    arduino << QString(buffer);
-    qDebug() << "--" << buffer;
+    if(lineCount < StreamList.size()) {
+        arduino << (StreamList[lineCount]+'\n');
+        ui->informational_tBrowser->insertPlainText("<< " + StreamList[lineCount] +'\n');
+        ui->informational_tBrowser->verticalScrollBar()->setValue(ui->informational_tBrowser->verticalScrollBar()->maximum());
+        lineCount++;
+    }
+    else {
+        qDebug() << "StreamingFinished";
+        StreamFileTerminate();
+    }
 //    ui->xPos_lcdNum       //update current head position
 //    ui->yPos_lcdNum
-    if(GCodeFile->atEnd()){
-        qDebug() << "StreamingFinished";
-        ui->cutProgress_pBar->reset();
-        disconnect(arduino, SIGNAL(ok()), this, SLOT(StreamFileLoop()));
-    }
+}
+
+void GrblCage::StreamFileTerminate()
+{
+    disconnect(arduino, SIGNAL(ok()), this, SLOT(StreamFileLoop()));
+    disconnect(arduino, SIGNAL(error()), this, SLOT(StreamFileTerminate()));
+    ui->cutProgress_pBar->reset();
+    streamInProgress = 0;
 }
 
 void GrblCage::on_autoStart_pButton_clicked()
 {
     StreamFile();
 }
+void GrblCage::on_autoStop_pButton_clicked()
+{
+    StreamFileTerminate();
+}
+
+bool GrblCage::CheckForUnsavedChanges()
+{
+    GCodeFile->seek(0);
+    qDebug() << GCodeFile->readAll();
+    qDebug() << ui->gcodeEditor->toPlainText();
+    GCodeFile->seek(0);
+    if(QTextDocument(QString(GCodeFile->readAll())).toPlainText() != ui->gcodeEditor->toPlainText())        //this is awkward, but fixes disappearing \r\n
+    {
+        err->pushError(ErrorHandler::UnsavedChanges);
+        err->assessErrorList();
+        qDebug() << "Streaming will not continue while there are unsaved changes to the gcode file.\n";
+        return 1;
+    }
+    else
+        qDebug() << "All changes are saved. Streaming will continue!\n";
+    return 0;
+}
+
+QString GrblCage::PreProcess()
+{
+    QString StreamString("");
+    GCodeFile->seek(0);
+    while(GCodeFile->pos() < (GCodeFile->size()))
+    {
+        int readCounter = 0;
+        char buffer[100] = {'\0'};
+        GCodeFile->readLine(buffer, sizeof(buffer));
+        qDebug() << buffer;
+        while(buffer[readCounter] != '\0')
+        {
+            if(buffer[readCounter] == '%')
+            {
+                buffer[readCounter] = ' ';
+                qDebug() << "% deleted";
+            }
+            else if(buffer[readCounter] == '(' || buffer[readCounter] == '[') {
+                while(buffer[readCounter] != ')' && buffer[readCounter] != ']')
+                {
+                    qDebug() << buffer[readCounter] << "deleted";
+                    buffer[readCounter] = ' ';
+                    readCounter++;
+                }
+                qDebug() << buffer[readCounter] << "deleted";
+                buffer[readCounter] = ' ';
+            }
+            else if(buffer[readCounter] > 32) {
+                qDebug() << buffer[readCounter] << "ignored";
+            }
+            else if(buffer[readCounter]  == '\r')
+            {
+                buffer[readCounter] = ' ';
+                qDebug() << "\\r deleted";
+            }
+            else if(buffer[readCounter] == '\n')
+            {
+                buffer[readCounter] = ' ';
+                qDebug() << "\\n deleted";
+            }
+            readCounter++;
+        }
+        int checkCounter = 0;
+        while(buffer[checkCounter] != '\0')
+        {
+            if(buffer[checkCounter] > 32) {
+                StreamString.append((QString(buffer) + '\n'));
+                qDebug() << buffer << "appended\n";
+                break;
+            }
+            checkCounter++;
+        }
+        qDebug() << "Current Position = " <<GCodeFile->pos() << '/' << GCodeFile->size();
+    }
+    qDebug() << StreamString;
+    qDebug() << "PreProcess() finished";
+    return StreamString;
+}
+
+
+

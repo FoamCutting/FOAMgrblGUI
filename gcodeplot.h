@@ -3,7 +3,7 @@
 
 
 #include <QDebug>
-
+#include <QElapsedTimer>
 
 #include <QObject>
 #include <QGraphicsScene>
@@ -22,16 +22,15 @@ class GCodePlot : public QObject
 public:
     explicit GCodePlot(QObject *parent = 0);
     ~GCodePlot();
-    void processGCodes();
-    QFile* file();
-    void setFile(QFile*);
+    void processGCodes(QString);
     QGraphicsScene* scene();
     void setSettings(Settings*);
 
 public slots:
-    void refreshView();
 
 private:
+    QElapsedTimer timer;
+
     void setDefaults();
     void applySettings();
     Settings::plotSettings plot;
@@ -39,8 +38,6 @@ private:
 
     QPen drawPen;
     QGraphicsScene* GCodeScene;
-    QFile* GCodeFile;
-    bool GCodeFileSet;
 
     enum{INCHES, MM};
     bool arcMode;
@@ -60,7 +57,6 @@ private:
     void calculateArcElements(float,float,float,float,float,float);
     void drawArc(float,float,float,float,float);
     float calculateTheta(float,float);
-
 };
 
 #endif // GCODEPLOT_H

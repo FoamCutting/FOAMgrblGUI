@@ -14,6 +14,7 @@
 #include "offsetdialog.h"
 #include "scaledialog.h"
 #include "eventfilterizer.h"
+#include <QScrollBar>
 
 #include <QDebug>
 
@@ -38,6 +39,7 @@ private:
     bool panning;
     QPoint lastPanPoint;
     int saveGCode(QString);
+    int openGCode(QString);
     void SetCenter(const QPointF&);
     QPointF GetCenter() { return currentCenterPoint; }
     QPointF currentCenterPoint;
@@ -47,6 +49,11 @@ private:
     int gridScale;
     QFile *GCodeFile;
     void StreamFile();
+    bool CheckForUnsavedChanges();
+    QString PreProcess();
+    QList<QString> StreamList;
+    int lineCount;
+    bool streamInProgress;
 
 public:
     explicit GrblCage(QWidget *parent = 0);
@@ -78,6 +85,7 @@ private slots:
     void on_needleStartStop_toggled(bool checked);
     void on_autoStart_pButton_clicked();
     void on_actionSave_as_triggered();
+    void on_autoStop_pButton_clicked();
 
 signals:
     void GCodeDocumentAltered();
@@ -92,6 +100,8 @@ public slots:
     void AdjustForResize();
     void GetGridScale();
     void StreamFileLoop();
+    void StreamFileTerminate();
+    void refreshPlot();
 };
 
 #endif // GRBLCAGE_H

@@ -8,7 +8,6 @@ OffsetDialog::OffsetDialog(GCodeText* text, GCodePlot* plot, QWidget *parent) :
     ui->setupUi(this);
     targetText = text;
     targetPlot = plot;
-    QObject::connect(this, SIGNAL(GCodeDocumentAltered()), targetPlot, SLOT(refreshView()));
 }
 
 OffsetDialog::~OffsetDialog()

@@ -28,16 +28,21 @@ bool ArduinoIO::grblSettings::operator== (grblSettings other)
         !CompareFloats(feedRate, other.feedRate) ||
         !CompareFloats(seekRate, other.seekRate) ||
         !CompareFloats(arcSegment, other.arcSegment) ||
-        !CompareFloats(acceleration, other.acceleration) ||
-        !CompareFloats(cornering, other.cornering) ||
         stepPulse != other.stepPulse ||
         stepInvert != other.stepInvert )
-
     {
         qDebug() << "false";
         return false;
     }
-
+    else if(grblVersion != 0)
+    {
+        if(!CompareFloats(acceleration, other.acceleration) ||
+           !CompareFloats(cornering, other.cornering))
+        {
+            qDebug() << "false";
+            return false;
+        }
+    }
     else
         qDebug() << "true";
     return true;
@@ -60,7 +65,7 @@ QList<QextPortInfo> ArduinoIO::GetPorts()
 {
     ports.clear();
     ports = QextSerialEnumerator::getPorts();
-    //qDebug() << "Connected Arduinos";
+    //qDebug() << "ed Arduinos";
     //qDebug() << "===================================";
     for (int i = 0; i < ports.size();) {
         if((ports.at(i).portName).contains("ttyUSB") || (ports.at(i).portName).contains("ttyACM") ) {
@@ -103,6 +108,7 @@ int ArduinoIO::DeviceState()
 void ArduinoIO::SetDeviceState(int state)
 {
     deviceState = state;
+    qDebug() << "Arduino state is:" << state;
 }
 
 bool ArduinoIO::OpenPort()
@@ -172,27 +178,37 @@ void ArduinoIO::Flush()
 {
     arduinoPort->flush();
     dataBuffer.clear();
+//    this << QString("\n");
 }
 
 void ArduinoIO::onReadyRead()
 {
+//    emit deviceStateChanged(BUSY);
     QString data = arduinoPort->readLine().trimmed();
-    if(data == "")
-        return;
-    else if(data == "Stored new setting")
-        return;
-    else if(data == "ok")
+    qDebug() << ">>" << data;
+//    if(data == "")
+//        return;
+//    else if(data == "Stored new setting")
+//        return;
+    /*else*/ if(data == "ok")
     {
         emit ok();
     }
-    else if(data == "Grbl 0.6b") {
-        currentGrblSettings.grblVersion = 1;
-        SetGrblVersion(1);
-        return;
+    else if(QString(data).remove(6,100) == "error:")
+    {
+        emit error();
+        //pass to errorhandler
     }
-    else if(data == "Grbl 0.51") {
-        currentGrblSettings.grblVersion = 0;
-        SetGrblVersion(0);
+    else if(data[0] == 'G' && data[1] == 'r' && data[2] == 'b' && data[3] == 'l' && data[4] == ' ') {
+        QString version = data.remove(0,5);
+        currentGrblSettings.grblVersion = 2;
+        if(version == "0.7d")
+            currentGrblSettings.grblVersion = 2;
+        else if(version == "0.6b")
+            currentGrblSettings.grblVersion = 1;
+        else if(version == "0.51")
+            currentGrblSettings.grblVersion = 0;
+        SetGrblVersion(currentGrblSettings.grblVersion);
         return;
     }
     else if(data == "'$' to dump current settings") {
@@ -201,8 +217,8 @@ void ArduinoIO::onReadyRead()
         return;
     }
     dataBuffer << data;
-    qDebug() << data << " -- from oRR";
     emit newData();
+//    emit deviceStateChanged(READY);
 }
 
 void ArduinoIO::SeekRelative(double dX, double dY, double dZ)
@@ -225,6 +241,7 @@ void ArduinoIO::SeekAbsolute(double dX, double dY, double dZ)
 ArduinoIO* &operator <<(ArduinoIO *output, const QString string) //could probably put this in the class.Too tired to think about it.
 {
     output->arduinoPort->write(string.toAscii());
+    qDebug() << "<< " << string.trimmed();
     return output;
 }
 
@@ -234,7 +251,7 @@ void ArduinoIO::GetDeviceGrblSettings(int arduinoState)
 
     if(DeviceState() == READY || DeviceState() == CHECKING) {
          Flush();
-         this << QString("\r\n\r\n");
+//         this << QString("\r\n\r\n");     //this was causing issues in 0.7d; is it really necessary?
          this << QString("$\n");
          disconnect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(GetDeviceGrblSettings(int)));
          connect(this, SIGNAL(ok()), this, SLOT(GetDeviceGrblSettings2()));

@@ -157,7 +157,7 @@
         <enum>QTabWidget::North</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="manualTab">
         <attribute name="title">
@@ -674,7 +674,7 @@
                   </widget>
                  </item>
                  <item>
-                  <widget class="QPushButton" name="autoStart_pButton_2">
+                  <widget class="QPushButton" name="autoStop_pButton">
                    <property name="text">
                     <string>STOP!</string>
                    </property>
@@ -695,6 +695,9 @@
               </widget>
              </item>
             </layout>
+           </item>
+           <item>
+            <widget class="QTextBrowser" name="informational_tBrowser"/>
            </item>
            <item>
             <spacer name="verticalSpacer_3">

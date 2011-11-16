@@ -98,12 +98,12 @@ private slots:
     void on_plotSave_pButton_clicked();
     void PutDeviceGrblSettings2();
     void on_refreshArduinoPortList_tButton_clicked();
-    void on_settings_clicked();
-    void on_report_clicked();
     void on_grblVerson_combo_currentIndexChanged(int index);
     void CompareGrblSettings(int);
     void FindMachine2(bool);
     void on_plotDefaults_pButton_clicked();
+
+    void on_upload_pButton_clicked();
 
 private:
     Ui::Settings *ui;
