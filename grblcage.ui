@@ -157,7 +157,7 @@
         <enum>QTabWidget::North</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="manualTab">
         <attribute name="title">
@@ -589,6 +589,13 @@
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QPushButton" name="zero_pButton">
+               <property name="text">
+                <string>Zero</string>
+               </property>
+              </widget>
              </item>
              <item>
               <spacer name="verticalSpacer">

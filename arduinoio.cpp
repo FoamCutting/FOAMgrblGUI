@@ -224,7 +224,7 @@ void ArduinoIO::onReadyRead()
 void ArduinoIO::SeekRelative(double dX, double dY, double dZ)
 {
     QString command;
-    command.append("G00").append(" X").append(QString::number(dX)).append(" Y").append(QString::number(dY)).append(" Z").append(QString::number(dZ)).append("\r\n");
+    command.append("G20").append(" G00").append(" X").append(QString::number(dX)).append(" Y").append(QString::number(dY)).append(" Z").append(QString::number(dZ)).append("\r\n");
     qDebug() << command;
     this << QString("G91");
     this << command;

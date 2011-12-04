@@ -683,7 +683,63 @@ bool GCodeText::check()
 //    err->assessErrorList();
 }
 
-bool GCodeText::fix()
+QString GCodeText::Preprocess()
 {
+    QString StreamString("");
+    GCodeFile->seek(0);
+    while(GCodeFile->pos() < (GCodeFile->size()))
+    {
+        int readCounter = 0;
+        char buffer[100] = {'\0'};
+        GCodeFile->readLine(buffer, sizeof(buffer));
+        qDebug() << buffer;
+        while(buffer[readCounter] != '\0')
+        {
+            if(buffer[readCounter] == '%')
+            {
+                buffer[readCounter] = ' ';
+                qDebug() << "% deleted";
+            }
+            else if(buffer[readCounter] == '(' || buffer[readCounter] == '[') {
+                while(buffer[readCounter] != ')' && buffer[readCounter] != ']')
+                {
+                    qDebug() << buffer[readCounter] << "deleted";
+                    buffer[readCounter] = ' ';
+                    readCounter++;
+                }
+                qDebug() << buffer[readCounter] << "deleted";
+                buffer[readCounter] = ' ';
+            }
+            else if(buffer[readCounter] > 32) {
+                qDebug() << buffer[readCounter] << "ignored";
+            }
+            else if(buffer[readCounter]  == '\r')
+            {
+                buffer[readCounter] = ' ';
+                qDebug() << "\\r deleted";
+            }
+            else if(buffer[readCounter] == '\n')
+            {
+                buffer[readCounter] = ' ';
+                qDebug() << "\\n deleted";
+            }
+            readCounter++;
+        }
+        int checkCounter = 0;
+        while(buffer[checkCounter] != '\0')
+        {
+            if(buffer[checkCounter] > 32) {
+                StreamString.append((QString(buffer) + '\n'));
+                qDebug() << buffer << "appended\n";
+                break;
+            }
+            checkCounter++;
+        }
+        qDebug() << "Current Position = " <<GCodeFile->pos() << '/' << GCodeFile->size();
+    }
+    qDebug() << StreamString;
+    qDebug() << "PreProcess() finished";
+    return StreamString;
 }
+
 

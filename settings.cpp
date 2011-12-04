@@ -47,8 +47,8 @@ void Settings::showEvent(QShowEvent *event)
     DisplayGrblSettings();
     emit settingsShown();
     RefreshPortList();
-    arduino->SetPortName(ui->arduinoPort_combo->currentText());
-    arduino->OpenPort();
+//    arduino->SetPortName(ui->arduinoPort_combo->currentText());
+//    arduino->OpenPort();
     ui->arduinoPort_combo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     event->accept();
 }
@@ -158,10 +158,6 @@ QDataStream &operator >>(QDataStream &input, Settings::plotSettings &settings)
 }
 
 /** ******************** Grbl Setttings ******************** **/
-ArduinoIO::grblSettings DeviceGrblSettings()
-{
-
-}
 
 void Settings::GetGrblSettings(ArduinoIO::grblSettings *settings)
 {

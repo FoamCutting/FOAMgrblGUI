@@ -18,7 +18,7 @@
 
 #include <QDebug>
 
-#define _JogIncrement 0.1
+#define _JogIncrement 1
 
 
 namespace Ui {
@@ -86,6 +86,7 @@ private slots:
     void on_autoStart_pButton_clicked();
     void on_actionSave_as_triggered();
     void on_autoStop_pButton_clicked();
+    void on_zero_pButton_clicked();
 
 signals:
     void GCodeDocumentAltered();

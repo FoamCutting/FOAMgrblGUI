@@ -222,13 +222,14 @@ void GrblCage::AdjustForResize()
     SetCenter(visibleArea.center());
 }
 
-/** ******************** (File Menu Buttons) ******************** **/
 
+/** ******************** (File Menu Buttons) ******************** **/
 
 void GrblCage::on_actionNew_GCode_File_triggered()
 {
-//    if(CheckForUnsavedChanges())
+    if(CheckForUnsavedChanges()) {
 
+    }
     GCodeFile->setFileName("tmp");
     GCodeFile->open(QIODevice::ReadWrite);
     GCodeDocument->setPlainText("");
@@ -293,7 +294,8 @@ int GrblCage::openGCode(QString fileName)
     if(GCodeFile->isOpen() && (GCodeFile->fileName() == "tmp"))
         GCodeFile->remove();
     GCodeFile->setFileName(fileName);
-    GCodeFile->open(QIODevice::ReadWrite);
+    if(!GCodeFile->open(QIODevice::ReadWrite))
+        return 0;
     GCodeDocument->setPlainText(GCodeFile->readAll());
 
     editor->setFile(GCodeFile);
@@ -304,6 +306,7 @@ int GrblCage::openGCode(QString fileName)
     ui->gcodePlotter->fitInView(plotter->scene()->sceneRect(), Qt::KeepAspectRatioByExpanding);
     ui->gcodeEditor->setDocument(editor->document());
     SetCenter(QPointF((ui->gcodePlotter->sceneRect().width())/2, -(ui->gcodePlotter->sceneRect().height())/2));
+    return 1;
 }
 
 void GrblCage::on_actionOpen_GCode_File_triggered()
@@ -311,15 +314,13 @@ void GrblCage::on_actionOpen_GCode_File_triggered()
     QString fileName = QFileDialog::getOpenFileName(this,
                                                     "Open Files",
                                                     0,
-                                                    "Gcode Files (*.ngc *.txt *.nc *.GC)",
+                                                    "Gcode Files (*.ngc *.txt *.nc *.GC *.gc)",
                                                     0,
                                                     QFileDialog::DontUseNativeDialog);
-    if(fileName.isEmpty() || fileName.isNull())
-    {
+    if(fileName.isEmpty() || fileName.isNull()) {
         return;
     }
-    else
-    {
+    else {
         openGCode(fileName);
     }
     qDebug() << "File name is " << GCodeFile->fileName();
@@ -327,6 +328,10 @@ void GrblCage::on_actionOpen_GCode_File_triggered()
 
 void GrblCage::on_actionSettings_triggered()
 {
+    if(arduino->DeviceState() == ArduinoIO::READY);
+    {
+        settings->SetArduino(arduino);
+    }
     settings->show();
     DisableMainWindow();
 }
@@ -402,9 +407,24 @@ void GrblCage::on_actionRemove_Line_Numbers_triggered()
     err->assessErrorList();
 }
 
+
+/** ******************** (Manual Movement buttons) ******************** **/
+
 void GrblCage::on_needleStartStop_toggled(bool checked)
 {
-    qDebug() << arduino->DeviceState();
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress) {
+        if(checked)
+            arduino << QString("G91\n G00 X0 Y0 Z-1.0\n");
+        else
+            arduino << QString("G91\n G00 X0 Y0 Z1.0\n");
+    }
+}
+
+void GrblCage::on_zero_pButton_clicked()
+{
+    //won't work with 0.51
+    if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
+        arduino << QString("G92 X0 Y0 Z0\n");
 }
 
 void GrblCage::on_jogYpositive_clicked()
@@ -455,6 +475,19 @@ void GrblCage::on_jogXpositiveYnegative_clicked()
         arduino->SeekRelative(_JogIncrement, -_JogIncrement, 0);
 }
 
+
+/** ******************** (Automatic Streaming buttons) ******************** **/
+
+void GrblCage::on_autoStart_pButton_clicked()
+{
+    StreamFile();
+}
+
+void GrblCage::on_autoStop_pButton_clicked()
+{
+    StreamFileTerminate();
+}
+
 void GrblCage::StreamFile()
 {
     if(streamInProgress)
@@ -462,7 +495,7 @@ void GrblCage::StreamFile()
     if(GCodeFile->isOpen()) {
         if(CheckForUnsavedChanges())
             return;
-        StreamList = PreProcess().split('\n', QString::SkipEmptyParts);
+        StreamList = editor->Preprocess().split('\n', QString::SkipEmptyParts);
         int count = StreamList.length();
         ui->cutProgress_pBar->setMaximum(count);
         arduino << QString("(starting transfer)\n");
@@ -500,15 +533,6 @@ void GrblCage::StreamFileTerminate()
     streamInProgress = 0;
 }
 
-void GrblCage::on_autoStart_pButton_clicked()
-{
-    StreamFile();
-}
-void GrblCage::on_autoStop_pButton_clicked()
-{
-    StreamFileTerminate();
-}
-
 bool GrblCage::CheckForUnsavedChanges()
 {
     GCodeFile->seek(0);
@@ -526,65 +550,4 @@ bool GrblCage::CheckForUnsavedChanges()
         qDebug() << "All changes are saved. Streaming will continue!\n";
     return 0;
 }
-
-QString GrblCage::PreProcess()
-{
-    QString StreamString("");
-    GCodeFile->seek(0);
-    while(GCodeFile->pos() < (GCodeFile->size()))
-    {
-        int readCounter = 0;
-        char buffer[100] = {'\0'};
-        GCodeFile->readLine(buffer, sizeof(buffer));
-        qDebug() << buffer;
-        while(buffer[readCounter] != '\0')
-        {
-            if(buffer[readCounter] == '%')
-            {
-                buffer[readCounter] = ' ';
-                qDebug() << "% deleted";
-            }
-            else if(buffer[readCounter] == '(' || buffer[readCounter] == '[') {
-                while(buffer[readCounter] != ')' && buffer[readCounter] != ']')
-                {
-                    qDebug() << buffer[readCounter] << "deleted";
-                    buffer[readCounter] = ' ';
-                    readCounter++;
-                }
-                qDebug() << buffer[readCounter] << "deleted";
-                buffer[readCounter] = ' ';
-            }
-            else if(buffer[readCounter] > 32) {
-                qDebug() << buffer[readCounter] << "ignored";
-            }
-            else if(buffer[readCounter]  == '\r')
-            {
-                buffer[readCounter] = ' ';
-                qDebug() << "\\r deleted";
-            }
-            else if(buffer[readCounter] == '\n')
-            {
-                buffer[readCounter] = ' ';
-                qDebug() << "\\n deleted";
-            }
-            readCounter++;
-        }
-        int checkCounter = 0;
-        while(buffer[checkCounter] != '\0')
-        {
-            if(buffer[checkCounter] > 32) {
-                StreamString.append((QString(buffer) + '\n'));
-                qDebug() << buffer << "appended\n";
-                break;
-            }
-            checkCounter++;
-        }
-        qDebug() << "Current Position = " <<GCodeFile->pos() << '/' << GCodeFile->size();
-    }
-    qDebug() << StreamString;
-    qDebug() << "PreProcess() finished";
-    return StreamString;
-}
-
-
 

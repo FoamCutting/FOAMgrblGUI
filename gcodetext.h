@@ -37,7 +37,7 @@ public:
     int countLines();
     int getUnits();
     bool check();
-    bool fix();
+    QString Preprocess();
 
 signals:
 

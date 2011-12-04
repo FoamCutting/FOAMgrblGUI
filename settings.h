@@ -79,7 +79,6 @@ public:
     static const ArduinoIO::grblSettings defaultGrblSettings;
     static const arduinoSettings defaultArduinoSettings;
     plotSettings PlotSettings();
-    ArduinoIO::grblSettings DeviceGrblSettings();
     ArduinoIO::grblSettings LocalGrblSettings();
     arduinoSettings ArduinoSettings();
     void GetPlotSettings();
