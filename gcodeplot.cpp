@@ -67,141 +67,159 @@ void GCodePlot::processGCodes(QString gcodeString)
     float endCoord[2] = {0};
     float arcCenter[2] = {0};
     float radius = 0;
+    int position = 0;
 
-    QTextStream gcodeStream(&gcodeString);
+       while(gcodeString[position] != '\0')
+       {
+           char ch = gcodeString[position].toAscii();
+           switch(ch)
+           {
+           case '(':
+               while(gcodeString[position] != ')')
+                   position++;
+               break;
+           case '/':
+               while(gcodeString[position] != '\n')
+                   position++;
+               break;
+           case 'G':
+               switch(GetNumString(gcodeString, &position).toInt())
+               {
+               case 0:
+                   drawMode = Linear;
+                   drawPen.setColor(plot.moveColor);
+                   break;
+               case 1:
+                   drawMode = Linear;
+                   drawPen.setColor(plot.cutColor);
+                   break;
+               case 2:
+                   drawMode = CWArc;
+                   drawPen.setColor(plot.cutColor);
+                   break;
+               case 3:
+                   drawMode = CCWArc;
+                   drawPen.setColor(plot.cutColor);
+                   break;
+               case 4:
+                   //show dwell point
+                   break;
+               case 20:
+                   scaleFactor = UNITS_PER_INCH;
+                   drawMode = None;
+                   break;
+               case 21:
+                   scaleFactor = UNITS_PER_MM;
+                   drawMode = None;
+                   break;
+               case 90:
+                   coordinateMode = Absolute;
+                   drawMode = None;
+                   break;
+               case 91:
+                   coordinateMode = Incremental;
+                   drawMode = None;
+                   break;
+               }
+               break;
+           case 'M':
+           {
+               switch(GetNumString(gcodeString, &position).toInt())
+               {
+               case 3:
+                   drawMode = None;
+                   break;
+               case 4:
+                   drawMode = None;
+                   break;
+               case 5:
+                   drawMode = None;
+                   drawPen.setColor(plot.moveColor);
+                   break;
+               }
+           }
+               break;
+           case 'T':
+               //show tool number at this position
+               break;
+           case 'X':
+           {
+               if(coordinateMode == Absolute)
+                   endCoord[0] = GetNumString(gcodeString, &position).toFloat();
+               else
+                   endCoord[0] += GetNumString(gcodeString, &position).toFloat();
+           }
+               break;
+           case 'Y':
+           {
+               if(coordinateMode == Absolute)
+                   endCoord[1] = GetNumString(gcodeString, &position).toFloat();
+               else
+                   endCoord[1] += GetNumString(gcodeString, &position).toFloat();
+           }
+               break;
+           case 'R':
+           {
+               arcMode = Radius;
+               radius = GetNumString(gcodeString, &position).toFloat();
+           }
+               break;
+           case 'I':
+           {
+               arcMode = Center;
+               arcCenter[0] = GetNumString(gcodeString, &position).toFloat();
+               if(arcCenterMode == Absolute)
+                   arcCenter[0] -= startCoord[0];
+           }
+               break;
+           case 'J':
+           {
+               arcMode = Center;
+               arcCenter[1] = GetNumString(gcodeString, &position).toFloat();
+               if(arcCenterMode == Absolute)
+                    arcCenter[1] -= startCoord[1];
+           }
+               break;
+           case '\n':
+//               qDebug() << "end of line";
+               if(drawMode != None)
+               {
+                   if(drawMode != Linear)
+                   {
+                       if(arcMode == Radius)
+                           calculateArcElements(startCoord[0], startCoord[1], endCoord[0], endCoord[1], radius);
+                       else if(arcMode == Center)
+                           calculateArcElements(startCoord[0], startCoord[1], endCoord[0], endCoord[1], arcCenter[0], arcCenter[1]);
+                   }
+                   else
+                       drawLine(startCoord[0], startCoord[1], endCoord[0], endCoord[1]);
 
-    while(!(gcodeStream.atEnd()))
-    {
-        QList<QString> codeLineList;
-        QString command;
-        QString line = gcodeStream.readLine();
-        codeLineList = line.toUpper().trimmed().split(" ", QString::SkipEmptyParts);
-        for(int i = 0; i<(codeLineList.size()); i++)
-        {
-            command = codeLineList[i].trimmed();
+                   startCoord[0] = endCoord[0];
+                   startCoord[1] = endCoord[1];
+               }
+               break;
+           }
 
-            if(command[0] == '(')
-            {
-                drawMode = None;
-                break;
-            }
-            else if(command[0] == '[')
-            {
-                drawMode = None;
-                break;
-            }
-            else if(command[0] == 'N')
-            {
+   //        qDebug() << gcodeString[position];
+           position++;
+           }
+       qDebug() << "draw time is:" << timer.elapsed();
+       }
 
-            }
-            else if(command[0] == 'G')
-            {
-                int number = command.remove(0,1).toInt();
-                switch(number)
-                {
-                case 0:
-                    drawMode = Linear;
-                    drawPen.setColor(plot.moveColor);
-                    break;
-                case 1:
-                    drawMode = Linear;
-                    drawPen.setColor(plot.cutColor);
-                    break;
-                case 2:
-                    drawMode = CWArc;
-                    drawPen.setColor(plot.cutColor);
-                    break;
-                case 3:
-                    drawMode = CCWArc;
-                    drawPen.setColor(plot.cutColor);
-                    break;
-                case 20:
-                    scaleFactor = UNITS_PER_INCH;
-                    drawMode = None;
-                    break;
-                case 21:
-                    scaleFactor = UNITS_PER_MM;
-                    drawMode = None;
-                    break;
-                case 90:
-                    coordinateMode = Absolute;
-                    drawMode = None;
-                    break;
-                case 91:
-                    coordinateMode = Incremental;
-                    drawMode = None;
-                    break;
-                }
-            }
-            else if(command[0] == 'M')
-            {
-                int number = command.remove(0,1).toInt();
-                switch(number)
-                {
-                case 3:
-                    drawMode = None;
-                    break;
-                case 4:
-                    drawMode = None;
-                    break;
-                case 5:
-                    drawMode = None;
-                    drawPen.setColor(plot.moveColor);
-                    break;
-                }
-            }
-            else if(command[0] == 'X')
-            {
-                if(coordinateMode == Absolute)
-                    endCoord[0] = command.remove(0,1).toFloat();
-                else
-                    endCoord[0] += command.remove(0,1).toFloat();
-            }
-            else if(command[0] == 'Y')
-            {
-                if(coordinateMode == Absolute)
-                    endCoord[1] = command.remove(0,1).toFloat();
-                else
-                    endCoord[1] += command.remove(0,1).toFloat();
-            }
-            else if(command[0] == 'R')
-            {
-                arcMode = Radius;
-                radius = command.remove(0,1).toFloat();
-            }
-            else if(command[0] == 'I')
-            {
-                arcMode = Center;
-                arcCenter[0] = command.remove(0,1).toFloat();
-                if(arcCenterMode == Absolute)
-                    arcCenter[0] -= startCoord[0];
-            }
-            else if(command[0] == 'J')
-            {
-                arcMode = Center;
-                arcCenter[1] = command.remove(0,1).toFloat();
-                if(arcCenterMode == Absolute)
-                     arcCenter[1] -= startCoord[1];
-            }
-        }
-        if(drawMode != None)
-        {
-            if(drawMode != Linear)
-            {
-                if(arcMode == Radius)
-                    calculateArcElements(startCoord[0], startCoord[1], endCoord[0], endCoord[1], radius);
-                else if(arcMode == Center)
-                    calculateArcElements(startCoord[0], startCoord[1], endCoord[0], endCoord[1], arcCenter[0], arcCenter[1]);
-            }
-            else
-                drawLine(startCoord[0], startCoord[1], endCoord[0], endCoord[1]);
-
-            startCoord[0] = endCoord[0];
-            startCoord[1] = endCoord[1];
-        }
-    }
-    qDebug() << "run time is:" << timer.elapsed();
-}
+   inline QString GCodePlot::GetNumString(QString gcodeString, int *pos)
+   {
+//       qDebug() << "Position is" << *pos;
+       QString numString("");
+       (*pos)++;
+       while((gcodeString[*pos] >= '0' && gcodeString[*pos] <= '9') || gcodeString[*pos] == '.' || gcodeString[*pos] == '-')
+          {
+//              qDebug() << "loop";
+              numString.append(gcodeString[*pos]);
+              (*pos)++;
+          }
+       (*pos)--;
+       return numString;
+   }
 
 void GCodePlot::drawLine(float x1, float y1, float x2, float y2)
 {

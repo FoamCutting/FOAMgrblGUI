@@ -685,6 +685,11 @@ bool GCodeText::check()
 
 QString GCodeText::Preprocess()
 {
+    class GCode{
+        int motionMode;
+        int currentPosition[3];
+    };
+
     QString StreamString("");
     GCodeFile->seek(0);
     while(GCodeFile->pos() < (GCodeFile->size()))
@@ -710,6 +715,30 @@ QString GCodeText::Preprocess()
                 qDebug() << buffer[readCounter] << "deleted";
                 buffer[readCounter] = ' ';
             }
+            else if(buffer[readCounter] == 'F') {//remove all defined feed rates; use defaults
+                do {
+                    buffer[readCounter] =  ' ';
+                    readCounter++;
+                }
+                while((buffer[readCounter] >= '0' && buffer[readCounter] <= '9') || buffer[readCounter] == '.');
+                readCounter--;
+            }
+//            else if(buffer[readCounter] == 'Z') {//make all Z changes uniform
+//                readCounter++;
+//                if(buffer[readCounter] == '-')
+//                    readCounter++;
+//                buffer[readCounter] = '1';
+//                readCounter++;
+//                buffer[readCounter] = '.';
+//                readCounter++;
+//                buffer[readCounter] = '0';
+//                readCounter++;
+//                while((buffer[readCounter] >= '0' && buffer[readCounter] <= '9') || buffer[readCounter] == '.') {
+//                    buffer[readCounter] =  ' ';
+//                    readCounter++;
+//                }
+//                readCounter--;
+//            }
             else if(buffer[readCounter] > 32) {
                 qDebug() << buffer[readCounter] << "ignored";
             }

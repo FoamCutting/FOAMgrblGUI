@@ -84,7 +84,7 @@ public:
     void GetPlotSettings();
     void GetGrblSettings(ArduinoIO::grblSettings*);
     void SetArduino(ArduinoIO*);
-    void FindMachine();
+    void FindMachine1();
     void SetErrorHandler(ErrorHandler*);
 //    bool CompareFloats(float, float);
 

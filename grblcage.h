@@ -18,7 +18,7 @@
 
 #include <QDebug>
 
-#define _JogIncrement 1
+#define _JogIncrement 0.25
 
 
 namespace Ui {

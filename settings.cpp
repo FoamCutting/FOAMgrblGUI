@@ -428,17 +428,21 @@ void Settings::PutDeviceGrblSettings2()
 }
 
 
-void Settings::FindMachine()
+void Settings::FindMachine1()
 {
-    qDebug() << "FINDMACHINESTART";
+    qDebug() << "FINDMACHINE1START";
     arduino->GetPorts();
     if(arduino->ports.isEmpty())
         return;
+    else if(arduino->ports.size() == 1) {
+        //maybe do something here
+    }
     arduino->SetPortName(arduino->ports.at(0).physName);
     arduino->OpenPort();
     connect(arduino, SIGNAL(deviceStateChanged(int)), this, SLOT(CompareGrblSettings(int)));
     connect(this, SIGNAL(CompareGrblSettingsResult(bool)), this, SLOT(FindMachine2(bool)));
-    qDebug() << "FINDMACHINEEND";
+    //arduino << QString("$\n");       //this might help when the arduino does not reset upon starting the serial connection
+    qDebug() << "FINDMACHINE1END";
 }
 
 void Settings::CompareGrblSettings(int state)

@@ -57,6 +57,7 @@ private:
     void calculateArcElements(float,float,float,float,float,float);
     void drawArc(float,float,float,float,float);
     float calculateTheta(float,float);
+    inline QString GetNumString(QString gcodeString, int *pos);
 };
 
 #endif // GCODEPLOT_H

@@ -15,7 +15,7 @@ GrblCage::GrblCage(QWidget *parent) :
     plotter->setSettings(settings);
     settings->SetArduino(arduino);
     settings->SetErrorHandler(err);
-    settings->FindMachine();
+    settings->FindMachine1();
     streamInProgress = 0;
 
     GCodeFile = new QFile;
@@ -414,7 +414,7 @@ void GrblCage::on_needleStartStop_toggled(bool checked)
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress) {
         if(checked)
-            arduino << QString("G91\n G00 X0 Y0 Z-1.0\n");
+            arduino << QString("G91\n G00 X0 Y0 Z-0.3\n");
         else
             arduino << QString("G91\n G00 X0 Y0 Z1.0\n");
     }
@@ -424,7 +424,7 @@ void GrblCage::on_zero_pButton_clicked()
 {
     //won't work with 0.51
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-        arduino << QString("G92 X0 Y0 Z0\n");
+        arduino << QString("G92 X0\n G92 Y0\n G92 Z0\n");
 }
 
 void GrblCage::on_jogYpositive_clicked()

@@ -21,10 +21,10 @@ private:
     int deviceState;
     int grblVersion;
     ErrorHandler *err;
-    void GetDeviceGrblSettings();
     void ClearGrblSettings();
 
 public:
+    ~ArduinoIO();
     struct grblSettings {
         int grblVersion;
         float stepsX;

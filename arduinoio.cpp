@@ -7,6 +7,13 @@ ArduinoIO::ArduinoIO(QObject *parent) :
     connect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(SetDeviceState(int)));
 }
 
+ArduinoIO::~ArduinoIO()
+{
+    if(arduinoPort->isOpen())
+        arduinoPort->close();
+    qDebug() << "Arduino Destructor Called";
+}
+
 bool ArduinoIO::grblSettings::operator== (grblSettings other)
 {
 //        if( grblVersion != other.grblVersion) qDebug() << 1;
@@ -122,6 +129,7 @@ bool ArduinoIO::OpenPort()
     arduinoPort->setBaudRate(BAUD9600);
     deviceState = arduinoPort->open(QIODevice::ReadWrite);
     connect(arduinoPort, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+//    QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings(deviceState)));
     if(deviceState) {
         emit deviceStateChanged(CONNECTED);
        // flush();
