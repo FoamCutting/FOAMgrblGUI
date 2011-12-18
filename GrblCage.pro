@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     grblcage.cpp \
     eventfilterizer.cpp \
     settings.cpp \
-    arduinoio.cpp
+    arduinoio.cpp \
+    Toolbox.cpp
 
 HEADERS  += \
     gcodeplot.h \
@@ -33,7 +34,8 @@ HEADERS  += \
     qextserialport.h \
     qextserialenumerator.h \
     qextserialport_global.h \
-    arduinoio.h
+    arduinoio.h \
+    Toolbox.h
 
 FORMS    += grblcage.ui \
     errorhandler.ui \

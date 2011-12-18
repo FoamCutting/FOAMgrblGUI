@@ -71,6 +71,22 @@ public:
         QString baudRate;
         int grblVersion;
     };
+    struct preprocessSettings
+    {
+	bool preprocess;
+	bool optimize;
+	bool checkCompatibility;
+	bool alwaysDefaultFeed;
+	bool removeLineNumbers;
+	bool removeUnnecessaryCommands;
+	bool removeUnsupportedCommands;
+	bool removeArcs;
+	int arcSegments;
+	bool uniformZ;
+	float zMagnitude;
+	bool saveFile;
+	QString fileAppend;
+    };
 
     static QString filePath;
     static QString currentMachineName;
@@ -78,9 +94,11 @@ public:
     static const plotSettings defaultPlotSettings;
     static const ArduinoIO::grblSettings defaultGrblSettings;
     static const arduinoSettings defaultArduinoSettings;
+    static const preprocessSettings defaultPreprocessSettings;
     plotSettings PlotSettings();
     ArduinoIO::grblSettings LocalGrblSettings();
     arduinoSettings ArduinoSettings();
+    preprocessSettings PreprocessSettings();
     void GetPlotSettings();
     void GetGrblSettings(ArduinoIO::grblSettings*);
     void SetArduino(ArduinoIO*);

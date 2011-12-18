@@ -9,9 +9,6 @@ ArduinoIO::ArduinoIO(QObject *parent) :
 
 ArduinoIO::~ArduinoIO()
 {
-    if(arduinoPort->isOpen())
-        arduinoPort->close();
-    qDebug() << "Arduino Destructor Called";
 }
 
 bool ArduinoIO::grblSettings::operator== (grblSettings other)

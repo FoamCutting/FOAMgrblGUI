@@ -10,6 +10,8 @@
 #include <QTextStream>
 #include <QFile>
 #include "errorhandler.h"
+#include "Toolbox.h"
+#include "settings.h"
 
 class GCodeText : public QObject
 {

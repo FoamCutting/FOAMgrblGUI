@@ -116,7 +116,7 @@ void GrblCage::SetCenter(const QPointF& centerPoint)
     //Get the rectangle of the visible area in scene coords
     QRectF visibleArea = ui->gcodePlotter->mapToScene(ui->gcodePlotter->rect()).boundingRect();
 
-    //Get the scene area
+    //Get the scene areag53
     QRectF sceneBounds = ui->gcodePlotter->sceneRect();
 
     double boundX = visibleArea.width() / 2.0;
@@ -550,4 +550,3 @@ bool GrblCage::CheckForUnsavedChanges()
         qDebug() << "All changes are saved. Streaming will continue!\n";
     return 0;
 }
-

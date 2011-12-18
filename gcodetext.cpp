@@ -683,92 +683,360 @@ bool GCodeText::check()
 //    err->assessErrorList();
 }
 
-QString GCodeText::Preprocess()
-{
-    class GCode{
-        int motionMode;
-        int currentPosition[3];
-    };
+//QString GCodeText::Preprocess()
+//{
+//    class GCode{
+//	int motionMode;
+//	int currentPosition[3];
+//    };
 
-    QString StreamString("");
-    GCodeFile->seek(0);
-    while(GCodeFile->pos() < (GCodeFile->size()))
-    {
-        int readCounter = 0;
-        char buffer[100] = {'\0'};
-        GCodeFile->readLine(buffer, sizeof(buffer));
-        qDebug() << buffer;
-        while(buffer[readCounter] != '\0')
-        {
-            if(buffer[readCounter] == '%')
-            {
-                buffer[readCounter] = ' ';
-                qDebug() << "% deleted";
-            }
-            else if(buffer[readCounter] == '(' || buffer[readCounter] == '[') {
-                while(buffer[readCounter] != ')' && buffer[readCounter] != ']')
-                {
-                    qDebug() << buffer[readCounter] << "deleted";
-                    buffer[readCounter] = ' ';
-                    readCounter++;
-                }
-                qDebug() << buffer[readCounter] << "deleted";
-                buffer[readCounter] = ' ';
-            }
-            else if(buffer[readCounter] == 'F') {//remove all defined feed rates; use defaults
-                do {
-                    buffer[readCounter] =  ' ';
-                    readCounter++;
-                }
-                while((buffer[readCounter] >= '0' && buffer[readCounter] <= '9') || buffer[readCounter] == '.');
-                readCounter--;
-            }
-//            else if(buffer[readCounter] == 'Z') {//make all Z changes uniform
-//                readCounter++;
-//                if(buffer[readCounter] == '-')
+//    float lastZ = 0;
+
+//    QString StreamString("");
+//    GCodeFile->seek(0);
+//    while(GCodeFile->pos() < (GCodeFile->size()))
+//    {
+//        int readCounter = 0;
+//        char buffer[100] = {'\0'};
+//        GCodeFile->readLine(buffer, sizeof(buffer));
+//        qDebug() << buffer;
+//        while(buffer[readCounter] != '\0')
+//        {
+//            if(buffer[readCounter] == '%')
+//            {
+//                buffer[readCounter] = ' ';
+//                qDebug() << "% deleted";
+//            }
+//            else if(buffer[readCounter] == '(' || buffer[readCounter] == '[') {
+//                while(buffer[readCounter] != ')' && buffer[readCounter] != ']')
+//                {
+//                    qDebug() << buffer[readCounter] << "deleted";
+//                    buffer[readCounter] = ' ';
 //                    readCounter++;
-//                buffer[readCounter] = '1';
-//                readCounter++;
-//                buffer[readCounter] = '.';
-//                readCounter++;
-//                buffer[readCounter] = '0';
-//                readCounter++;
-//                while((buffer[readCounter] >= '0' && buffer[readCounter] <= '9') || buffer[readCounter] == '.') {
+//                }
+//                qDebug() << buffer[readCounter] << "deleted";
+//                buffer[readCounter] = ' ';
+//            }
+//            else if(buffer[readCounter] == 'F') {//remove all defined feed rates; use defaults
+//                do {
 //                    buffer[readCounter] =  ' ';
 //                    readCounter++;
 //                }
+//                while((buffer[readCounter] >= '0' && buffer[readCounter] <= '9') || buffer[readCounter] == '.');
 //                readCounter--;
 //            }
-            else if(buffer[readCounter] > 32) {
-                qDebug() << buffer[readCounter] << "ignored";
-            }
-            else if(buffer[readCounter]  == '\r')
-            {
-                buffer[readCounter] = ' ';
-                qDebug() << "\\r deleted";
-            }
-            else if(buffer[readCounter] == '\n')
-            {
-                buffer[readCounter] = ' ';
-                qDebug() << "\\n deleted";
-            }
-            readCounter++;
-        }
-        int checkCounter = 0;
-        while(buffer[checkCounter] != '\0')
-        {
-            if(buffer[checkCounter] > 32) {
-                StreamString.append((QString(buffer) + '\n'));
-                qDebug() << buffer << "appended\n";
-                break;
-            }
-            checkCounter++;
-        }
-        qDebug() << "Current Position = " <<GCodeFile->pos() << '/' << GCodeFile->size();
-    }
-    qDebug() << StreamString;
-    qDebug() << "PreProcess() finished";
-    return StreamString;
+////            else if(buffer[readCounter] == 'Z') {//make all Z changes uniform
+////                readCounter++;
+////                if(buffer[readCounter] == '-')
+////                    readCounter++;
+////                buffer[readCounter] = '1';
+////                readCounter++;
+////                buffer[readCounter] = '.';
+////                readCounter++;
+////                buffer[readCounter] = '0';
+////                readCounter++;
+////                while((buffer[readCounter] >= '0' && buffer[readCounter] <= '9') || buffer[readCounter] == '.') {
+////                    buffer[readCounter] =  ' ';
+////                    readCounter++;
+////                }
+////                readCounter--;
+////            }
+//            else if(buffer[readCounter] > 32) {
+//                qDebug() << buffer[readCounter] << "ignored";
+//            }
+//            else if(buffer[readCounter]  == '\r')
+//            {
+//                buffer[readCounter] = ' ';
+//                qDebug() << "\\r deleted";
+//            }
+//            else if(buffer[readCounter] == '\n')
+//            {
+//                buffer[readCounter] = ' ';
+//                qDebug() << "\\n deleted";
+//            }
+//            readCounter++;
+//        }
+//        int checkCounter = 0;
+//        while(buffer[checkCounter] != '\0')
+//        {
+//            if(buffer[checkCounter] > 32) {
+//                StreamString.append((QString(buffer) + '\n'));
+//                qDebug() << buffer << "appended\n";
+//                break;
+//            }
+//            checkCounter++;
+//        }
+//        qDebug() << "Current Position = " <<GCodeFile->pos() << '/' << GCodeFile->size();
+//    }
+//    qDebug() << StreamString;
+//    qDebug() << "PreProcess() finished";
+//    return StreamString;
+//}
+
+QString GCodeText::Preprocess()
+{
+    qDebug() << "PreProcess";
+    QString gcodeString = GCodeDocument->toPlainText();
+    gcodeString.append('\0');
+    QString processedString("");
+    enum{Seek, Cut, CWArc, CCWArc};
+    enum{Absolute, Incremental};
+    enum{Center, Radius};
+    int arcMode = 9;
+    int arcCenterMode = 9;
+    bool moveMode = 0;
+    bool moveModeLast = 0;
+    int coordinateMode = 9;
+    int coordinateModeLast = 9;
+    int unitMode = 9;
+    int unitModeLast = 9;
+    //look into QVector; might be more appropriate
+    QList<QPolygon> shape;
+    QList<QPointF> point;
+    QString startCoord[3] = {0};
+    QString endCoord[3] = {0};
+    QString arcCenter[3] = {0};
+    QString arcCenterLast[3] = {0};
+    float radius = 0;
+    int position = 0;
+
+   while(gcodeString[position] != '\0')
+   {
+       //G 0 1 2 3 4 17 18 19 20 21 28 30 53 80 90 91 92 93 94
+       //M 0 1 2 3 4 5 30 60
+       char ch = gcodeString[position].toAscii();
+       switch(ch)
+       {
+       case '%':
+	   //ignore
+	   position++;
+	   break;
+       case ' ':
+	   //ignore
+	   position++;
+	   break;
+       case 'F':case 'f':
+	   position++;
+	   while(gcodeString[position] >= '0' && gcodeString[position] <= '9')
+	       position++;
+	   break;
+       case '(':
+	   while(gcodeString[position] != ')')
+	       position++;
+	   break;
+       case '/':
+	   while(gcodeString[position] != '\n')
+	       position++;
+	   break;
+       case 'G':case 'g':
+	   switch(GetNumString(gcodeString, &position).toInt())
+	   {
+	   case 0:
+	       moveMode = Seek;
+	       break;
+	   case 1:
+	       moveMode = Cut;
+	       break;
+	   case 2:
+	       moveMode = CWArc;
+	       break;
+	   case 3:
+	       moveMode = CCWArc;
+	       break;
+	   case 4:
+	       //dwell
+	       break;
+//	   case 17:	//irrelevant for foam cutting machine
+//	       break;
+//	   case 18:
+//	       break;
+//	   case 19:
+//	       break;
+	   case 20:
+	       unitMode = 0;
+	       break;
+	   case 21:
+	       unitMode = 1;
+	       break;
+	   case 28:
+	       //go home
+	       break;
+	   case 30:
+	       //go home
+	       break;
+	   case 53:
+	       //absolute coordinate override
+	       break;
+	   case 80:
+	       //cancel canned cycle
+	       break;
+	   case 90:
+	       coordinateMode = Absolute;
+	       break;
+	   case 91:
+	       coordinateMode = Incremental;
+	       break;
+	   case 92:
+	       //set coordinate offset
+	       break;
+	   case 93:
+	       //inverse feed rate on
+	       break;
+	   case 94:
+	       //inverse feed rate off
+	       break;
+	   default:
+	       //unsupported code
+	       break;
+	   }
+	   break;
+       case 'M':case 'm':
+       {
+	   switch(GetNumString(gcodeString, &position).toInt())
+	   {
+	   case 0:
+	       //compulsory stop
+	       break;
+	   case 1:
+	       //optional stop
+	       break;
+//	   case 2:	    //irrelvant for foam cutting machine
+//	       //end of program
+//	       break;
+//	   case 3:
+//	       //spindle on CW
+//	       break;
+//	   case 4:
+//	       //spindle on CCW
+//	       break;
+	   case 5:
+	       //spindle off
+	       break;
+	   case 30:
+	       //end of program (return to top)
+	       break;
+	   case 60:
+	       //automatic pallet change?
+	       break;
+	   default:
+	       //unsupported code
+	       break;
+	   }
+       }
+	   break;
+       case 'X':case 'x':
+       {
+	   endCoord[0] = GetNumString(gcodeString, &position);
+       }
+	   break;
+       case 'Y':case 'y':
+       {
+	   endCoord[1] = GetNumString(gcodeString, &position);
+       }
+	   break;
+       case 'Z':case 'z':
+       {
+	   endCoord[2] = GetNumString(gcodeString, &position);
+
+       }
+	   break;
+       case 'R':case 'r':
+       {
+	   arcMode = Radius;
+	   radius = GetNumString(gcodeString, &position).toFloat();
+       }
+	   break;
+       case 'I':case 'i':
+       {
+	   arcMode = Center;
+	   arcCenter[0] = GetNumString(gcodeString, &position);
+       }
+	   break;
+       case 'J':case 'j':
+       {
+	   arcMode = Center;
+	   arcCenter[1] = GetNumString(gcodeString, &position);
+       }
+       case 'K':case'k':
+       {
+//	   invalid for foam cutting machine
+//	   arcMode = Center;
+//	   arcCenter[2] = GetNumString(gcodeString, &position);
+       }
+	   break;
+       case '\n': case '\r':
+       {
+	   int changed = 0;
+//               qDebug() << "end of line";
+	   while(gcodeString[position] <= ' ')
+	   {
+	       if(gcodeString[position] == '\0')
+		   break;
+	       position++;
+	   }
+	   if(unitMode != unitModeLast) {
+	       processedString.append("G2").append(QString::number(unitMode));
+	       changed = 1;
+	   }
+	   if(coordinateMode != coordinateModeLast) {
+	       processedString.append("G9").append(QString::number(coordinateMode));
+	       changed = 1;
+	   }
+	   if(moveMode != moveModeLast) {
+	       processedString.append("G0").append(QString::number(moveMode));
+	       changed = 1;
+	   }
+	   if(startCoord[0] != endCoord[0]) {
+	       processedString.append('X').append(endCoord[0]);
+	       changed = 1;
+	   }
+	   if(startCoord[1] != endCoord[1]) {
+	       processedString.append('Y').append(endCoord[1]);
+	       changed = 1;
+	   }
+	   if(startCoord[2] != endCoord[2]) {
+//	   make z changes uniform for foam cutting
+	   if(endCoord[2] > startCoord[2])
+	       processedString.append('Z').append(QString::number(1));
+	   else if(endCoord[2] < startCoord[2])
+	       processedString.append('Z').append(QString::number(-1));
+	   changed = 1;
+	   }
+	   if(arcCenter[0] != arcCenterLast[0]) {
+	       processedString.append('I').append(arcCenter[0]);
+	       changed = 1;
+	   }
+	   if(arcCenter[1] != arcCenterLast[1]) {
+	       processedString.append('J').append(arcCenter[1]);
+	       changed = 1;
+	   }
+	   if(arcCenter[2] != arcCenterLast[2]) {
+	       processedString.append('K').append(arcCenter[2]);
+	       changed = 1;
+	   }
+	   if(changed == 1) {
+	   coordinateModeLast = coordinateMode;
+	   unitModeLast = unitMode;
+	   moveModeLast = moveMode;
+	   startCoord[0] = endCoord[0];
+	   startCoord[1] = endCoord[1];
+	   startCoord[2] = endCoord[2];
+	   arcCenter[0] = arcCenterLast[0];
+	   arcCenter[1] = arcCenterLast[1];
+	   arcCenter[2] = arcCenterLast[2];
+	   processedString.append('\n');
+	   }
+	   break;
+       }
+       default:
+	   position++;
+       }
+
+	qDebug() << gcodeString[position];
+       }
+   qDebug() << "--------Processed String---------\n" << processedString << "------------------End-----------------\n";
+   return processedString;
 }
+
 
 

@@ -4,6 +4,8 @@
 const ArduinoIO::grblSettings Settings::defaultGrblSettings = {1, 755.906,755.906,755.906,480,480,0.1,4.8,50,0b00000000,30};
 const Settings::plotSettings Settings::defaultPlotSettings = {0, 24, 16, 0, QColor("#cfcfcf"), QColor("#00ff00"), QColor("#0000ff"), 0.05};
 const Settings::arduinoSettings Settings::defaultArduinoSettings = {"/dev/ttyACM0", "9600", 1};
+const Settings::preprocessSettings Settings::defaultPreprocessSettings = {1,1,1,1,1,1,1,1,5,1,0.5,1,"processed"};
+
 QString Settings::currentMachineName = "Machine0.dat";
 QDir Settings::applicationDirectory = QDir("");
 Settings::Settings(QWidget *parent) :
@@ -537,4 +539,9 @@ void Settings::on_plotDefaults_pButton_clicked()
 void Settings::on_upload_pButton_clicked()
 {
     PutDeviceGrblSettings();
+}
+
+Settings::preprocessSettings Settings::PreprocessSettings()
+{
+    return
 }

@@ -10,6 +10,7 @@
 #include <QTextStream>
 #include <math.h>
 #include "settings.h"
+#include "Toolbox.h"
 
 #define UNITS_PER_INCH 254
 #define UNITS_PER_MM 10
@@ -57,7 +58,7 @@ private:
     void calculateArcElements(float,float,float,float,float,float);
     void drawArc(float,float,float,float,float);
     float calculateTheta(float,float);
-    inline QString GetNumString(QString gcodeString, int *pos);
+//    inline QString GetNumString(QString gcodeString, int *pos);
 };
 
 #endif // GCODEPLOT_H

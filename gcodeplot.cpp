@@ -206,20 +206,20 @@ void GCodePlot::processGCodes(QString gcodeString)
        qDebug() << "draw time is:" << timer.elapsed();
        }
 
-   inline QString GCodePlot::GetNumString(QString gcodeString, int *pos)
-   {
-//       qDebug() << "Position is" << *pos;
-       QString numString("");
-       (*pos)++;
-       while((gcodeString[*pos] >= '0' && gcodeString[*pos] <= '9') || gcodeString[*pos] == '.' || gcodeString[*pos] == '-')
-          {
-//              qDebug() << "loop";
-              numString.append(gcodeString[*pos]);
-              (*pos)++;
-          }
-       (*pos)--;
-       return numString;
-   }
+//   inline QString GCodePlot::GetNumString(QString gcodeString, int *pos)
+//   {
+////       qDebug() << "Position is" << *pos;
+//       QString numString("");
+//       (*pos)++;
+//       while((gcodeString[*pos] >= '0' && gcodeString[*pos] <= '9') || gcodeString[*pos] == '.' || gcodeString[*pos] == '-')
+//          {
+////              qDebug() << "loop";
+//              numString.append(gcodeString[*pos]);
+//              (*pos)++;
+//          }
+//       (*pos)--;
+//       return numString;
+//   }
 
 void GCodePlot::drawLine(float x1, float y1, float x2, float y2)
 {
