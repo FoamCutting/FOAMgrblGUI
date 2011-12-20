@@ -1062,7 +1062,7 @@
       <attribute name="title">
        <string>Pre-Process</string>
       </attribute>
-      <widget class="QCheckBox" name="checkBox">
+      <widget class="QCheckBox" name="preEnabled_cBox">
        <property name="geometry">
         <rect>
          <x>10</x>
@@ -1084,11 +1084,11 @@
         <bool>false</bool>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_2">
+      <widget class="QCheckBox" name="preCheckCompatibility_cBox">
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>70</y>
+         <y>50</y>
          <width>161</width>
          <height>22</height>
         </rect>
@@ -1097,7 +1097,7 @@
         <string>Compatibility Check</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_3">
+      <widget class="QCheckBox" name="preRemoveArcs_cBox">
        <property name="geometry">
         <rect>
          <x>20</x>
@@ -1110,7 +1110,7 @@
         <string>Remove Arcs</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_4">
+      <widget class="QCheckBox" name="preRemoveLineNum_cBox">
        <property name="geometry">
         <rect>
          <x>20</x>
@@ -1123,7 +1123,7 @@
         <string>Remove Line Numbers</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_5">
+      <widget class="QCheckBox" name="preUniformZ_cBox">
        <property name="geometry">
         <rect>
          <x>20</x>
@@ -1136,7 +1136,7 @@
         <string>Uniform Z Changes</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_6">
+      <widget class="QCheckBox" name="preRemoveUnnecessary_cBox">
        <property name="geometry">
         <rect>
          <x>20</x>
@@ -1149,7 +1149,7 @@
         <string>Remove Unnecessary Commands</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_7">
+      <widget class="QCheckBox" name="preRemoveUnsupported_cBox">
        <property name="geometry">
         <rect>
          <x>20</x>
@@ -1166,7 +1166,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>310</y>
+         <y>270</y>
          <width>361</width>
          <height>121</height>
         </rect>
@@ -1177,11 +1177,11 @@
        <property name="frameShadow">
         <enum>QFrame::Raised</enum>
        </property>
-       <widget class="QCheckBox" name="checkBox_8">
+       <widget class="QCheckBox" name="preSaveFile_cBox">
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>0</y>
+          <y>10</y>
           <width>151</width>
           <height>22</height>
          </rect>
@@ -1190,8 +1190,18 @@
          <string>Save Modified File</string>
         </property>
        </widget>
+       <widget class="QLineEdit" name="preFileAppend_lEdit">
+        <property name="geometry">
+         <rect>
+          <x>170</x>
+          <y>10</y>
+          <width>113</width>
+          <height>27</height>
+         </rect>
+        </property>
+       </widget>
       </widget>
-      <widget class="QDoubleSpinBox" name="doubleSpinBox">
+      <widget class="QDoubleSpinBox" name="preArcPrecision_dspin">
        <property name="geometry">
         <rect>
          <x>190</x>
@@ -1201,7 +1211,7 @@
         </rect>
        </property>
       </widget>
-      <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+      <widget class="QDoubleSpinBox" name="preZMagnitude_dspin">
        <property name="geometry">
         <rect>
          <x>190</x>
@@ -1211,7 +1221,7 @@
         </rect>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_9">
+      <widget class="QCheckBox" name="preOptimize_cBox">
        <property name="geometry">
         <rect>
          <x>20</x>
@@ -1224,17 +1234,30 @@
         <string>Optimize Tool Path</string>
        </property>
       </widget>
-      <widget class="QCheckBox" name="checkBox_10">
+      <widget class="QCheckBox" name="preAlwaysDefaultFeed_cBox">
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>50</y>
+         <y>70</y>
          <width>231</width>
          <height>22</height>
         </rect>
        </property>
        <property name="text">
         <string>Always Use Default Feed Rate</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="preProcSave_pButton">
+       <property name="geometry">
+        <rect>
+         <x>270</x>
+         <y>410</y>
+         <width>97</width>
+         <height>27</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Save</string>
        </property>
       </widget>
      </widget>

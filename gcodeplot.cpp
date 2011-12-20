@@ -1,5 +1,4 @@
 #include "gcodeplot.h"
-#include "settings.h"
 
 GCodePlot::GCodePlot(QObject *parent) :
     QObject(parent)
@@ -22,7 +21,6 @@ void GCodePlot::setSettings(Settings *s)
 
 void GCodePlot::applySettings()
 {
-    plot = settings->PlotSettings();
     scaleFactor = UNITS_PER_INCH;
     arcCenterMode = Incremental;
 }
@@ -37,19 +35,23 @@ void GCodePlot::drawGrid()
     GCodeScene->clear();
     float gridSizeX, gridSizeY;
     int gridIncrement;
-    if(plot.gridUnits == INCHES)
+    if(settings->Get(Settings::plotGridUnits) == INCHES)
         gridIncrement = UNITS_PER_INCH;
     else
         gridIncrement = UNITS_PER_MM * 10;
-    if(plot.machineSizeUnits == INCHES) {
-        gridSizeX = plot.sizeX * UNITS_PER_INCH;
-        gridSizeY = plot.sizeY * UNITS_PER_INCH;
+    if(settings->Get(Settings::plotGridUnits) == INCHES) {
+	gridSizeX = settings->Get(Settings::machSizeX);
+	gridSizeY = settings->Get(Settings::machSizeY);
+	gridSizeX *= UNITS_PER_INCH;
+	gridSizeY *= UNITS_PER_INCH;
     }
     else {
-        gridSizeX = (plot.sizeX * UNITS_PER_MM * 10);
-        gridSizeY = (plot.sizeY * UNITS_PER_MM * 10);
+	gridSizeX = settings->Get(Settings::machSizeX);
+	gridSizeY = settings->Get(Settings::machSizeY);
+	gridSizeX *= UNITS_PER_MM * 10;
+	gridSizeY *= UNITS_PER_MM * 10;
     }
-    drawPen.setColor(plot.gridColor);
+    drawPen.setColor(settings->GetStr(Settings::plotGridColor));
     for(int i = 0; i <= gridSizeY; i+=gridIncrement)
         GCodeScene->addLine(0, i*(-1), gridSizeX, i*(-1), drawPen);
     for(int i = 0; i <= gridSizeX; i+=gridIncrement)
@@ -87,19 +89,19 @@ void GCodePlot::processGCodes(QString gcodeString)
                {
                case 0:
                    drawMode = Linear;
-                   drawPen.setColor(plot.moveColor);
+		   drawPen.setColor(settings->GetStr(Settings::plotMoveColor));
                    break;
                case 1:
                    drawMode = Linear;
-                   drawPen.setColor(plot.cutColor);
+		   drawPen.setColor(settings->GetStr(Settings::plotCutColor));
                    break;
                case 2:
                    drawMode = CWArc;
-                   drawPen.setColor(plot.cutColor);
+		   drawPen.setColor(settings->GetStr(Settings::plotCutColor));
                    break;
                case 3:
                    drawMode = CCWArc;
-                   drawPen.setColor(plot.cutColor);
+		   drawPen.setColor(settings->GetStr(Settings::plotCutColor));
                    break;
                case 4:
                    //show dwell point
@@ -134,7 +136,7 @@ void GCodePlot::processGCodes(QString gcodeString)
                    break;
                case 5:
                    drawMode = None;
-                   drawPen.setColor(plot.moveColor);
+		   drawPen.setColor(settings->GetStr(Settings::plotMoveColor));
                    break;
                }
            }
@@ -281,7 +283,7 @@ void GCodePlot::drawArc(float theta1, float theta2, float absXCenter, float absY
     {
         if(theta1 < theta2)
             theta2 -= 2*PI;
-        for(float theta = theta1; theta > theta2; theta -= plot.arcPrecision)
+	for(float theta = theta1; theta > theta2; theta -= settings->Get(Settings::plotArcPrecision))
         {
             drawLine(absXCenter+x1, absYCenter+y1, absXCenter+(radius*cos(theta)), absYCenter+(radius*sin(theta)));
             x1 = radius*cos(theta);
@@ -293,7 +295,7 @@ void GCodePlot::drawArc(float theta1, float theta2, float absXCenter, float absY
     {
         if(theta1 > theta2)
             theta2 += 2*PI;
-        for(float theta = theta1; theta < theta2; theta += plot.arcPrecision)
+	for(float theta = theta1; theta < theta2; theta += settings->Get(Settings::plotArcPrecision))
         {
             drawLine(absXCenter+x1, absYCenter+y1, absXCenter+(radius*cos(theta)), absYCenter+(radius*sin(theta)));
             x1 = radius*cos(theta);

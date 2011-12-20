@@ -25,7 +25,7 @@ bool ArduinoIO::grblSettings::operator== (grblSettings other)
 //        if(stepPulse != other.stepPulse ) qDebug() << 10;
 //        if (stepInvert != other.stepInvert ) qDebug() << 11;
 
-    if( grblVersion != other.grblVersion ||
+    if( version != other.version ||
         !CompareFloats(stepsX, other.stepsX) ||
         !CompareFloats(stepsY, other.stepsY) ||
         !CompareFloats(stepsZ, other.stepsZ) ||
@@ -38,7 +38,7 @@ bool ArduinoIO::grblSettings::operator== (grblSettings other)
         qDebug() << "false";
         return false;
     }
-    else if(grblVersion != 0)
+    else if(version != 0)
     {
         if(!CompareFloats(acceleration, other.acceleration) ||
            !CompareFloats(cornering, other.cornering))
@@ -206,14 +206,14 @@ void ArduinoIO::onReadyRead()
     }
     else if(data[0] == 'G' && data[1] == 'r' && data[2] == 'b' && data[3] == 'l' && data[4] == ' ') {
         QString version = data.remove(0,5);
-        currentGrblSettings.grblVersion = 2;
+	currentGrblSettings.version = 2;
         if(version == "0.7d")
-            currentGrblSettings.grblVersion = 2;
+	    currentGrblSettings.version = 2;
         else if(version == "0.6b")
-            currentGrblSettings.grblVersion = 1;
+	    currentGrblSettings.version = 1;
         else if(version == "0.51")
-            currentGrblSettings.grblVersion = 0;
-        SetGrblVersion(currentGrblSettings.grblVersion);
+	    currentGrblSettings.version = 0;
+	SetGrblVersion(currentGrblSettings.version);
         return;
     }
     else if(data == "'$' to dump current settings") {
@@ -365,4 +365,7 @@ void ArduinoIO::ClearGrblSettings()
     currentGrblSettings.cornering = -1;
 }
 
-
+int ArduinoIO::ChangeAllSettings(float, float, float, float, float, float, float, float, uint8_t, uint8_t)
+{
+    QObject::connect(this, SIGNAL(ok()), this, SLOT());
+}

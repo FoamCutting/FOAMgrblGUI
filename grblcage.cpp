@@ -13,6 +13,7 @@ GrblCage::GrblCage(QWidget *parent) :
     settings = new Settings;
     arduino = new ArduinoIO;
     plotter->setSettings(settings);
+    editor->SetSettings(settings);
     settings->SetArduino(arduino);
     settings->SetErrorHandler(err);
     settings->FindMachine1();
@@ -53,7 +54,7 @@ GrblCage::~GrblCage()
 
 void GrblCage::GetGridScale()
 {
-    if(settings->PlotSettings().gridUnits == 0)
+    if(settings->Get(Settings::plotGridUnits) == 0)
         gridScale = 254;
     else
         gridScale = 100;

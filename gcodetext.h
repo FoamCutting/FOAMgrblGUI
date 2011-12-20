@@ -22,6 +22,7 @@ private:
     QTextDocument* GCodeDocument;
     QFile* GCodeFile;
     ErrorHandler* err;
+    Settings* settings;
 
 public:
     ~GCodeText();
@@ -40,6 +41,7 @@ public:
     int getUnits();
     bool check();
     QString Preprocess();
+    void SetSettings(Settings*);
 
 signals:
 

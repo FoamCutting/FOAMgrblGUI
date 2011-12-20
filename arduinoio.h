@@ -26,7 +26,7 @@ private:
 public:
     ~ArduinoIO();
     struct grblSettings {
-        int grblVersion;
+	int version;
         float stepsX;
         float stepsY;
         float stepsZ;
@@ -59,14 +59,20 @@ public:
     void Flush();
     void SetGrblVersion(int);
     int NumberConnected();
-
     int DeviceState();
     enum{DISCONNECTED, CONNECTED, CHECKING, BUSY, READY};
 
     void SeekRelative(double, double, double);
     void SeekAbsolute(double, double, double);
 
+    template<typename T>
+    int ChangeSetting(int setting, T value)
+    {
+	this << QString("$").append(QString::number(setting)).append(" = ").append(QString::number(value).append("\n"));
+	qDebug() << "Changing Setting :: " << QString("$").append(QString::number(setting)).append(" = ").append(QString::number(value)).append("\n");
+    }
 //    ArduinoIO operator <<(QString);
+    int ChangeAllSettings(float,float,float,float,float,float,float,float,uint8_t,uint8_t);
 
 signals:
     void ok();

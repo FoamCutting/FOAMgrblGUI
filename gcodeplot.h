@@ -34,7 +34,6 @@ private:
 
     void setDefaults();
     void applySettings();
-    Settings::plotSettings plot;
     Settings *settings;
 
     QPen drawPen;

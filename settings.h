@@ -16,6 +16,8 @@
 #include <math.h>
 #include "arduinoio.h"
 #include "errorhandler.h"
+#include "Toolbox.h"
+#include <inttypes.h>
 
 #define DEFAULT_STEPS_PER_MM_X 755.906
 #define DEFAULT_STEPS_PER_MM_Y 755.906
@@ -56,24 +58,32 @@ public:
 //        bool operator==(grblSettings);
 //        bool CompareFloats(float, float);
 //    };
+    enum{machSizeUnits, machSizeX, machSizeY,
+	 plotGridUnits, plotGridColor, plotMoveColor, plotCutColor, plotArcPrecision,
+	 ardPortName, ardBaudRate,
+	 preEnabled, preOptimize, preCheckCompatibility, preAlwaysDefaultFeed, preRemoveLineNum, preRemoveUnnecessary, preRemoveUnsupported,
+	 preRemoveArcs, preArcSegments, preUniformZ, preZMagnitude, preSaveFile, preFileAppend,
+	 grblVersion, grblStepsX, grblStepsY, grblStepsZ, grblStepPulse, grblFeedRate, grblSeekRate, grblArcSegment, grblStepInvert, grblAcceleration, grblCornering
+    };
+    struct machineSettings{
+	bool units;
+	float sizeX;
+	float sizeY;
+    };
     struct plotSettings {
-        bool machineSizeUnits;
-        float sizeX;
-        float sizeY;
-        bool gridUnits;
-        QColor gridColor;
-        QColor moveColor;
-        QColor cutColor;
-        float arcPrecision;
+	bool gridUnits;
+	QString gridColor;
+	QString moveColor;
+	QString cutColor;
+	float arcPrecision;
     };
     struct arduinoSettings {
-        QString portName;
-        QString baudRate;
-        int grblVersion;
+	QString portName;
+	int baudRate;
     };
     struct preprocessSettings
     {
-	bool preprocess;
+	bool enabled;
 	bool optimize;
 	bool checkCompatibility;
 	bool alwaysDefaultFeed;
@@ -86,65 +96,60 @@ public:
 	float zMagnitude;
 	bool saveFile;
 	QString fileAppend;
-    };
-
-    static QString filePath;
-    static QString currentMachineName;
-    static QDir applicationDirectory;
-    static const plotSettings defaultPlotSettings;
-    static const ArduinoIO::grblSettings defaultGrblSettings;
-    static const arduinoSettings defaultArduinoSettings;
-    static const preprocessSettings defaultPreprocessSettings;
-    plotSettings PlotSettings();
-    ArduinoIO::grblSettings LocalGrblSettings();
-    arduinoSettings ArduinoSettings();
-    preprocessSettings PreprocessSettings();
-    void GetPlotSettings();
-    void GetGrblSettings(ArduinoIO::grblSettings*);
+};
     void SetArduino(ArduinoIO*);
     void FindMachine1();
     void SetErrorHandler(ErrorHandler*);
-//    bool CompareFloats(float, float);
+    QString GetStr(int);
+    float Get(int);
 
-private slots:
-    void on_grblSave_pButton_clicked();
-    void on_grblDefaults_pButton_clicked();
-    void on_gridColor_tButton_clicked();
-    void on_cutColor_tButton_clicked();
-    void on_moveColor_tButton_clicked();
-    void on_plotSave_pButton_clicked();
-    void PutDeviceGrblSettings2();
-    void on_refreshArduinoPortList_tButton_clicked();
-    void on_grblVerson_combo_currentIndexChanged(int index);
-    void CompareGrblSettings(int);
-    void FindMachine2(bool);
-    void on_plotDefaults_pButton_clicked();
+    //    bool CompareFloats(float, float);
 
-    void on_upload_pButton_clicked();
 
 private:
+    static QString filePath;
+    static QString currentMachineName;
+    static QDir applicationDirectory;
+    class allSettings{
+    public:
+	machineSettings machine;
+	plotSettings plot;
+	arduinoSettings arduino;
+	preprocessSettings preprocess;
+	ArduinoIO::grblSettings grbl;
+    }settings,defaultSettings;
     Ui::Settings *ui;
-    QFile* currentMachineFile;
-    inline int OpenFileStream(QDataStream*);
-    inline int CloseFileStream();
+    QFile* machineFile;
+    inline int OpenFile();
+    inline int CloseFile();
 
-    void PutDeviceGrblSettings();
+    QString GetSettingStr(int);
+    template<typename T>
+    T GetSetting(int);
+    template<typename S>
+    void PutSetting(QString description, int index, S setting, bool convertToString = 1);
+    void PutSettingStr(QString description, int index, QString setting);
+    int GetAllSettings();
+    int SaveAllSettings();
+
+    void GetGrblSettings();
     void PutGrblSettings();
-    void GrblDefaults();
     void DisplayGrblSettings();
     void SaveGrblSettings();
-    int GetGrblVersion();
     void AdjustForGrblVersion();
+    void PutDeviceGrblSettings();
 
-    void PutPlotSettings();
-    void DisplayPlotSettings();
-    void PlotDefaults();
-    void SavePlotSettings();
+    void GetGeneralSettings();
+    void PutGeneralSettings();
+    void SaveGeneralSettings();
+    void DisplayGeneralSettings();
 
-    ArduinoIO::grblSettings userGrblSettings;
+    void GetPreprocessSettings();
+    void PutPreprocessSettings();
+    void SavePreprocessSettings();
+    void DisplayPreprocessSettings();
+
     ArduinoIO::grblSettings deviceGrblSettings;
-    plotSettings userPlotSettings;
-    arduinoSettings userArduinoSettings;
     ErrorHandler *err;
 
     QColor SetColorSample(QToolButton*,QColor, bool dialog = 1);
@@ -154,11 +159,24 @@ private:
     bool writingToArduino;
     void RefreshPortList();
 
-
 protected:
     void hideEvent(QHideEvent *);
     void showEvent(QShowEvent *);
     void closeEvent(QCloseEvent*);
+
+private slots:
+    void on_grblSave_pButton_clicked();
+    void on_gridColor_tButton_clicked();
+    void on_cutColor_tButton_clicked();
+    void on_moveColor_tButton_clicked();
+    void on_plotSave_pButton_clicked();
+    void PutDeviceGrblSettings2();
+    void on_refreshArduinoPortList_tButton_clicked();
+    void on_grblVerson_combo_currentIndexChanged(int index);
+    void CompareGrblSettings(int);
+    void FindMachine2(bool);
+    void on_upload_pButton_clicked();
+    void on_preProcSave_pButton_clicked();
 
 signals:
     void settingsHidden();

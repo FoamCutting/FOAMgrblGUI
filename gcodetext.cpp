@@ -683,100 +683,12 @@ bool GCodeText::check()
 //    err->assessErrorList();
 }
 
-//QString GCodeText::Preprocess()
-//{
-//    class GCode{
-//	int motionMode;
-//	int currentPosition[3];
-//    };
-
-//    float lastZ = 0;
-
-//    QString StreamString("");
-//    GCodeFile->seek(0);
-//    while(GCodeFile->pos() < (GCodeFile->size()))
-//    {
-//        int readCounter = 0;
-//        char buffer[100] = {'\0'};
-//        GCodeFile->readLine(buffer, sizeof(buffer));
-//        qDebug() << buffer;
-//        while(buffer[readCounter] != '\0')
-//        {
-//            if(buffer[readCounter] == '%')
-//            {
-//                buffer[readCounter] = ' ';
-//                qDebug() << "% deleted";
-//            }
-//            else if(buffer[readCounter] == '(' || buffer[readCounter] == '[') {
-//                while(buffer[readCounter] != ')' && buffer[readCounter] != ']')
-//                {
-//                    qDebug() << buffer[readCounter] << "deleted";
-//                    buffer[readCounter] = ' ';
-//                    readCounter++;
-//                }
-//                qDebug() << buffer[readCounter] << "deleted";
-//                buffer[readCounter] = ' ';
-//            }
-//            else if(buffer[readCounter] == 'F') {//remove all defined feed rates; use defaults
-//                do {
-//                    buffer[readCounter] =  ' ';
-//                    readCounter++;
-//                }
-//                while((buffer[readCounter] >= '0' && buffer[readCounter] <= '9') || buffer[readCounter] == '.');
-//                readCounter--;
-//            }
-////            else if(buffer[readCounter] == 'Z') {//make all Z changes uniform
-////                readCounter++;
-////                if(buffer[readCounter] == '-')
-////                    readCounter++;
-////                buffer[readCounter] = '1';
-////                readCounter++;
-////                buffer[readCounter] = '.';
-////                readCounter++;
-////                buffer[readCounter] = '0';
-////                readCounter++;
-////                while((buffer[readCounter] >= '0' && buffer[readCounter] <= '9') || buffer[readCounter] == '.') {
-////                    buffer[readCounter] =  ' ';
-////                    readCounter++;
-////                }
-////                readCounter--;
-////            }
-//            else if(buffer[readCounter] > 32) {
-//                qDebug() << buffer[readCounter] << "ignored";
-//            }
-//            else if(buffer[readCounter]  == '\r')
-//            {
-//                buffer[readCounter] = ' ';
-//                qDebug() << "\\r deleted";
-//            }
-//            else if(buffer[readCounter] == '\n')
-//            {
-//                buffer[readCounter] = ' ';
-//                qDebug() << "\\n deleted";
-//            }
-//            readCounter++;
-//        }
-//        int checkCounter = 0;
-//        while(buffer[checkCounter] != '\0')
-//        {
-//            if(buffer[checkCounter] > 32) {
-//                StreamString.append((QString(buffer) + '\n'));
-//                qDebug() << buffer << "appended\n";
-//                break;
-//            }
-//            checkCounter++;
-//        }
-//        qDebug() << "Current Position = " <<GCodeFile->pos() << '/' << GCodeFile->size();
-//    }
-//    qDebug() << StreamString;
-//    qDebug() << "PreProcess() finished";
-//    return StreamString;
-//}
-
 QString GCodeText::Preprocess()
 {
     qDebug() << "PreProcess";
     QString gcodeString = GCodeDocument->toPlainText();
+    if(!settings->Get(Settings::preEnabled))
+	return gcodeString;
     gcodeString.append('\0');
     QString processedString("");
     enum{Seek, Cut, CWArc, CCWArc};
@@ -820,8 +732,8 @@ QString GCodeText::Preprocess()
 	   while(gcodeString[position] >= '0' && gcodeString[position] <= '9')
 	       position++;
 	   break;
-       case '(':
-	   while(gcodeString[position] != ')')
+       case '(':case '[':
+	   while(gcodeString[position] != ')' && gcodeString[position] != ']')
 	       position++;
 	   break;
        case '/':
@@ -995,12 +907,17 @@ QString GCodeText::Preprocess()
 	       changed = 1;
 	   }
 	   if(startCoord[2] != endCoord[2]) {
-//	   make z changes uniform for foam cutting
-	   if(endCoord[2] > startCoord[2])
-	       processedString.append('Z').append(QString::number(1));
-	   else if(endCoord[2] < startCoord[2])
-	       processedString.append('Z').append(QString::number(-1));
-	   changed = 1;
+	       if(!(settings->Get(Settings::preUniformZ))) {
+		   processedString.append('Z').append(endCoord[2]);
+	       }
+	       else {
+    //	   make z changes uniform for foam cutting
+		   if(endCoord[2] > startCoord[2])
+		       processedString.append('Z').append(QString::number(settings->Get(Settings::preZMagnitude)));
+		   else if(endCoord[2] < startCoord[2])
+		       processedString.append("Z-").append(QString::number(settings->Get(Settings::preZMagnitude)));
+	       }
+	       changed =1;
 	   }
 	   if(arcCenter[0] != arcCenterLast[0]) {
 	       processedString.append('I').append(arcCenter[0]);
@@ -1036,6 +953,11 @@ QString GCodeText::Preprocess()
        }
    qDebug() << "--------Processed String---------\n" << processedString << "------------------End-----------------\n";
    return processedString;
+}
+
+void GCodeText::SetSettings(Settings *s)
+{
+    settings = s;
 }
 
 
