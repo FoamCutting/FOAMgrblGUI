@@ -14,6 +14,7 @@
 #include "offsetdialog.h"
 #include "scaledialog.h"
 #include "eventfilterizer.h"
+#include "arduinoio.h"
 #include <QScrollBar>
 
 #include <QDebug>
@@ -54,12 +55,15 @@ private:
     QList<QString> StreamList;
     int lineCount;
     bool streamInProgress;
+    void PutDeviceGrblSettings();
 
 public:
     explicit GrblCage(QWidget *parent = 0);
     ~GrblCage();
 
 private slots:
+    void PutDeviceGrblSettings2();
+
     void on_actionScale_G_Code_triggered();
     void on_actionOpen_GCode_File_triggered();
     void on_actionSave_GCode_File_triggered();
@@ -87,6 +91,15 @@ private slots:
     void on_actionSave_as_triggered();
     void on_autoStop_pButton_clicked();
     void on_zero_pButton_clicked();
+    void on_actionUpload_Settings_triggered();
+
+    void on_actionCheck_Settings_triggered();
+
+    void on_pushButton_clicked();
+
+    void on_actionConnect_triggered();
+
+    void on_actionDisconnect_triggered();
 
 signals:
     void GCodeDocumentAltered();
@@ -103,6 +116,7 @@ public slots:
     void StreamFileLoop();
     void StreamFileTerminate();
     void refreshPlot();
+    void CheckMachine();
 };
 
 #endif // GRBLCAGE_H

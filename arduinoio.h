@@ -8,7 +8,8 @@
 #include "errorhandler.h"
 #include <QTimer>
 #include "inttypes.h"
-#include "math.h"
+#include "Toolbox.h"
+#include "settings.h"
 
 class ArduinoIO : public QObject
 {
@@ -19,40 +20,21 @@ private:
     QString arduinoPortName;
     QList<QString> dataBuffer;
     int deviceState;
-    int grblVersion;
     ErrorHandler *err;
     void ClearGrblSettings();
 
 public:
     ~ArduinoIO();
-    struct grblSettings {
-	int version;
-        float stepsX;
-        float stepsY;
-        float stepsZ;
-        float feedRate;
-        float seekRate;
-        float arcSegment;
-        float acceleration;
-        float cornering;
-        uint8_t stepInvert;
-        uint8_t stepPulse;
-        //uint8_t microsteps;
 
-        bool operator==(grblSettings);
-        bool CompareFloats(float, float);
-    };
-    grblSettings currentGrblSettings;
+    Settings::grblSettings GrblSettings;
     void SetErrorHandler(ErrorHandler*);
     QList<QextPortInfo> ports;
     bool IsReady();
     explicit ArduinoIO(QObject *parent = 0);
     QList<QextPortInfo> GetPorts();
-    bool OpenPort();
-    void OpenPort2();
+    bool OpenPort(int = 0);
     void ClosePort();
     bool SetBaudRate(int);
-    void SetPortName(QString);
     QString portName();
     friend ArduinoIO* &operator<<(ArduinoIO*, QString);
     QString getLine();
@@ -64,30 +46,34 @@ public:
 
     void SeekRelative(double, double, double);
     void SeekAbsolute(double, double, double);
+    void RefreshSettings();
 
     template<typename T>
-    int ChangeSetting(int setting, T value)
+    void ChangeSetting(int setting, T value)
     {
 	this << QString("$").append(QString::number(setting)).append(" = ").append(QString::number(value).append("\n"));
-	qDebug() << "Changing Setting :: " << QString("$").append(QString::number(setting)).append(" = ").append(QString::number(value)).append("\n");
+//	qDebug() << "Changing Setting :: " << QString("$").append(QString::number(setting)).append(" = ").append(QString::number(value)).append("\n");
     }
+
 //    ArduinoIO operator <<(QString);
     int ChangeAllSettings(float,float,float,float,float,float,float,float,uint8_t,uint8_t);
 
 signals:
     void ok();
     void error();
+    void settingChangeSucceeded();
     void newData();
     void portReady();
     void deviceStateChanged(int);
     void getDeviceGrblSettingsFinished();
 
 public slots:
-    void onReadyRead();
-    void GetDeviceGrblSettings(int);
 
 private slots:
+    void onReadyRead();
+    void onDSRChanged(bool x);
     void SetDeviceState(int);
+    void GetDeviceGrblSettings();
     void GetDeviceGrblSettings2();
 };
 

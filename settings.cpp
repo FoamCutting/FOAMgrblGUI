@@ -86,6 +86,10 @@ inline int Settings::CloseFile()
 }
 
 /** ******************** Grbl Setttings ******************** **/
+Settings::grblSettings Settings::GrblSettings()
+{
+    return settings.grbl;
+}
 
 void Settings::GetGrblSettings()
 {
@@ -370,125 +374,14 @@ void Settings::on_preProcSave_pButton_clicked()
 
 /** ********************(Serial Communication)******************** **/
 
-void Settings::SetArduino(ArduinoIO *a)
-{
-    arduino = a;
-}
-
 void Settings::RefreshPortList()
 {
     ui->arduinoPort_combo->clear();
-    QList<QextPortInfo> ports = arduino->GetPorts();
-    for(int i = 0; i < ports.size(); i++)
-    {
-        ui->arduinoPort_combo->addItem(ports.at(i).physName);
-    }
-}
-
-void Settings::PutDeviceGrblSettings()      //maybe write this functionality into the arduino class
-{
-    arduino->Flush();
-    writingToArduino = true;
-    QObject::connect(arduino, SIGNAL(newData()), this, SLOT(PutDeviceGrblSettings2()));
-    arduino->ChangeSetting(0, Get(grblStepsX));
-//    qDebug() << "PUTBEGIN";
-}
-
-void Settings::PutDeviceGrblSettings2()
-{
-    qDebug() << "PutDeviceGrblSettings2";
-    if(arduino->getLine() != "ok")
-        return;
-    static int count = 1;
-    arduino->ChangeSetting(count, Get(count + grblStepsX));
-    if(count == 9 || (count == 7 && arduino->currentGrblSettings.version == 0)) {
-	disconnect(arduino, SIGNAL(newData()), this, SLOT(PutDeviceGrblSettings2()));
-	count = 1;
-	writingToArduino = false;
-    }
-    count ++;
-}
-
-
-void Settings::FindMachine1()
-{
-    qDebug() << "FINDMACHINE1START";
-    arduino->GetPorts();
-    if(arduino->ports.isEmpty())
-        return;
-    else if(arduino->ports.size() == 1) {
-        //maybe do something here
-    }
-    arduino->SetPortName(arduino->ports.at(0).physName);
-    arduino->OpenPort();
-    connect(arduino, SIGNAL(deviceStateChanged(int)), this, SLOT(CompareGrblSettings(int)));
-    connect(this, SIGNAL(CompareGrblSettingsResult(bool)), this, SLOT(FindMachine2(bool)));
-    //arduino << QString("$\n");       //this might help when the arduino does not reset upon starting the serial connection
-    qDebug() << "FINDMACHINE1END";
-}
-
-void Settings::CompareGrblSettings(int state)
-{
-    qDebug() << "COMPAREGRBLSETTINGS";
-
-    bool result;
-
-    if(state != ArduinoIO::READY)
-        return;
-    disconnect(arduino, SIGNAL(deviceStateChanged(int)), this, SLOT(CompareGrblSettings(int)));
-    qDebug() << "local ==" << "device" << endl
-	     << settings.grbl.version << "=="<< arduino->currentGrblSettings.version << endl
-	     << settings.grbl.stepsX << "==" << arduino->currentGrblSettings.stepsX << endl
-	     << settings.grbl.stepsY << "==" << arduino->currentGrblSettings.stepsY << endl
-	     << settings.grbl.stepsZ  << "==" << arduino->currentGrblSettings.stepsZ << endl
-	     << settings.grbl.stepPulse << "==" << arduino->currentGrblSettings.stepPulse << endl
-	     << settings.grbl.feedRate << "==" << arduino->currentGrblSettings.feedRate << endl
-	     << settings.grbl.seekRate << "==" << arduino->currentGrblSettings.seekRate << endl
-	     << settings.grbl.arcSegment << "==" << arduino->currentGrblSettings.arcSegment << endl
-	     << settings.grbl.stepInvert  << "==" << arduino->currentGrblSettings.stepInvert << endl
-	     << settings.grbl.acceleration  << "==" << arduino->currentGrblSettings.acceleration << endl
-	     << settings.grbl.cornering << "==" << arduino->currentGrblSettings.cornering << endl;
-
-    if(!(settings.grbl == arduino->currentGrblSettings))
-        result = 0;
-    else
-        result = 1;
-    emit CompareGrblSettingsResult(result);
-}
-
-void Settings::FindMachine2(bool result)
-{
-    qDebug() << "FINDMACHINE2";
-    static int index = 0;       //use new instead of static
-    if(result) {
-        disconnect(this, SIGNAL(CompareGrblSettingsResult(bool)), this, SLOT(FindMachine2(bool)));
-        qDebug() << "the machine is connected on " << arduino->portName();
-        return;
-    }
-    else if(index != (arduino->ports.size() - 1)) {
-        index ++;
-        qDebug() << "the machine connected on " << arduino->portName() << "does not match the current settings";
-        arduino->ClosePort();
-        arduino->SetPortName(arduino->ports.at(index).physName);
-        arduino->OpenPort();
-        connect(arduino, SIGNAL(deviceStateChanged(int)), this, SLOT(CompareGrblSettings(int)));
-    }
-    else {
-        qDebug() << "the machine connected on " << arduino->portName() << "does not match the current settings";
-        disconnect(this, SIGNAL(CompareGrblSettingsResult(bool)), this, SLOT(FindMachine2(bool)));
-        qDebug() << "could not find a connected machine that matches the current settings";
-        index = 0;
-    }
 }
 
 void Settings::on_refreshArduinoPortList_tButton_clicked()
 {
     RefreshPortList();
-}
-
-void Settings::on_upload_pButton_clicked()
-{
-    PutDeviceGrblSettings();
 }
 
 QString Settings::GetStr(int sett)
@@ -689,4 +582,33 @@ int Settings::SaveAllSettings()
     SaveGrblSettings();
 }
 
-
+bool Settings::grblSettings::operator== (grblSettings other)
+{
+    bool status = 0;
+    if( version != other.version ||
+	!CompareFloats(stepsX, other.stepsX) ||
+	!CompareFloats(stepsY, other.stepsY) ||
+	!CompareFloats(stepsZ, other.stepsZ) ||
+	!CompareFloats(feedRate, other.feedRate) ||
+	!CompareFloats(seekRate, other.seekRate) ||
+	!CompareFloats(arcSegment, other.arcSegment) ||
+	stepPulse != other.stepPulse ||
+	stepInvert != other.stepInvert )
+    {
+	qDebug() << "False -- grblSettings operator==()";
+	status = 1;
+	return false;
+    }
+    else if(version != 0)
+    {
+	if(!CompareFloats(acceleration, other.acceleration) ||
+	   !CompareFloats(cornering, other.cornering))
+	{
+	    qDebug() << "False -- grblSettings operator==()";
+	    status = 1;
+	    return false;
+	}
+    }
+    qDebug() << "True -- grblSettings operator==()";
+    return true;
+}

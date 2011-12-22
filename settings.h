@@ -14,7 +14,6 @@
 #include <QDir>
 #include <QCloseEvent>
 #include <math.h>
-#include "arduinoio.h"
 #include "errorhandler.h"
 #include "Toolbox.h"
 #include <inttypes.h>
@@ -81,6 +80,22 @@ public:
 	QString portName;
 	int baudRate;
     };
+    struct grblSettings {
+	int version;
+	float stepsX;
+	float stepsY;
+	float stepsZ;
+	float feedRate;
+	float seekRate;
+	float arcSegment;
+	float acceleration;
+	float cornering;
+	uint8_t stepInvert;
+	uint8_t stepPulse;
+	//uint8_t microsteps;
+
+	bool operator==(grblSettings);
+    };
     struct preprocessSettings
     {
 	bool enabled;
@@ -97,11 +112,10 @@ public:
 	bool saveFile;
 	QString fileAppend;
 };
-    void SetArduino(ArduinoIO*);
-    void FindMachine1();
     void SetErrorHandler(ErrorHandler*);
     QString GetStr(int);
     float Get(int);
+    grblSettings GrblSettings();
 
     //    bool CompareFloats(float, float);
 
@@ -116,7 +130,7 @@ private:
 	plotSettings plot;
 	arduinoSettings arduino;
 	preprocessSettings preprocess;
-	ArduinoIO::grblSettings grbl;
+	grblSettings grbl;
     }settings,defaultSettings;
     Ui::Settings *ui;
     QFile* machineFile;
@@ -149,13 +163,12 @@ private:
     void SavePreprocessSettings();
     void DisplayPreprocessSettings();
 
-    ArduinoIO::grblSettings deviceGrblSettings;
+    grblSettings deviceGrblSettings;
     ErrorHandler *err;
 
     QColor SetColorSample(QToolButton*,QColor, bool dialog = 1);
 
 //    QextSerialEnumerator enumerator;
-    ArduinoIO *arduino;
     bool writingToArduino;
     void RefreshPortList();
 
@@ -170,19 +183,14 @@ private slots:
     void on_cutColor_tButton_clicked();
     void on_moveColor_tButton_clicked();
     void on_plotSave_pButton_clicked();
-    void PutDeviceGrblSettings2();
     void on_refreshArduinoPortList_tButton_clicked();
     void on_grblVerson_combo_currentIndexChanged(int index);
-    void CompareGrblSettings(int);
-    void FindMachine2(bool);
-    void on_upload_pButton_clicked();
     void on_preProcSave_pButton_clicked();
 
 signals:
     void settingsHidden();
     void settingsShown();
     void plotSettingsChanged();
-    void CompareGrblSettingsResult(bool);
 };
 
 #endif // SETTINGS_H

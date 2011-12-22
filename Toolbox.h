@@ -4,5 +4,7 @@
 #endif // TOOLBOX_H
 
 #include <QString>
+#include <math.h>
 
 QString GetNumString(QString, int*);
+bool CompareFloats(float, float);

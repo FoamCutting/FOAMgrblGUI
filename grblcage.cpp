@@ -14,9 +14,9 @@ GrblCage::GrblCage(QWidget *parent) :
     arduino = new ArduinoIO;
     plotter->setSettings(settings);
     editor->SetSettings(settings);
-    settings->SetArduino(arduino);
+//    arduino->SetSettings(settings);
+    arduino->OpenPort();
     settings->SetErrorHandler(err);
-    settings->FindMachine1();
     streamInProgress = 0;
 
     GCodeFile = new QFile;
@@ -36,6 +36,8 @@ GrblCage::GrblCage(QWidget *parent) :
     QObject::connect(settings,SIGNAL(settingsHidden()),this,SLOT(EnableMainWindow()));
     QObject::connect(settings, SIGNAL(plotSettingsChanged()), this, SLOT(refreshPlot()));
     QObject::connect(settings, SIGNAL(plotSettingsChanged()), this, SLOT(GetGridScale()));
+
+    QObject::connect(arduino, SIGNAL(getDeviceGrblSettingsFinished()), this, SLOT(CheckMachine()));
     GetGridScale();
 
     statusBar()->showMessage("GrblCage initiated");
@@ -331,7 +333,6 @@ void GrblCage::on_actionSettings_triggered()
 {
     if(arduino->DeviceState() == ArduinoIO::READY);
     {
-        settings->SetArduino(arduino);
     }
     settings->show();
     DisableMainWindow();
@@ -415,9 +416,9 @@ void GrblCage::on_needleStartStop_toggled(bool checked)
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress) {
         if(checked)
-            arduino << QString("G91\n G00 X0 Y0 Z-0.3\n");
+	    arduino << QString("G91\n G00 X0 Y0 Z-").append(QString::number(settings->Get(Settings::preZMagnitude))).append("\n");
         else
-            arduino << QString("G91\n G00 X0 Y0 Z1.0\n");
+	    arduino << QString("G91\n G00 X0 Y0 Z").append(QString::number(settings->Get(Settings::preZMagnitude))).append("\n");
     }
 }
 
@@ -425,7 +426,7 @@ void GrblCage::on_zero_pButton_clicked()
 {
     //won't work with 0.51
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-        arduino << QString("G92 X0\n G92 Y0\n G92 Z0\n");
+	arduino << QString("G90 \n G92 X0\n G92 Y0\n G92 Z0\n");
 }
 
 void GrblCage::on_jogYpositive_clicked()
@@ -491,7 +492,7 @@ void GrblCage::on_autoStop_pButton_clicked()
 
 void GrblCage::StreamFile()
 {
-    if(streamInProgress)
+    if(streamInProgress || !arduino->IsReady())
         return;
     if(GCodeFile->isOpen()) {
         if(CheckForUnsavedChanges())
@@ -550,4 +551,65 @@ bool GrblCage::CheckForUnsavedChanges()
     else
         qDebug() << "All changes are saved. Streaming will continue!\n";
     return 0;
+}
+
+void GrblCage::CheckMachine()
+{
+    if(arduino->GrblSettings == settings->GrblSettings())
+	qDebug() << "Machine Settings match Grbl Settings";
+    else
+	qDebug() << "Machine Settings do not match Grbl Settings";
+    QObject::disconnect(arduino, SIGNAL(getDeviceGrblSettingsFinished()), this, SLOT(CheckMachine()));
+}
+
+void GrblCage::on_actionUpload_Settings_triggered()
+{
+    PutDeviceGrblSettings();
+}
+
+void GrblCage::PutDeviceGrblSettings()      //maybe write this functionality into the arduino class
+{
+    arduino->Flush();
+//    writingToArduino = true;
+    QObject::connect(arduino, SIGNAL(newData()), this, SLOT(PutDeviceGrblSettings2()));
+    arduino->ChangeSetting(0, settings->Get(Settings::grblStepsX));
+//    qDebug() << "PUTBEGIN";
+}
+
+void GrblCage::PutDeviceGrblSettings2()
+{
+    qDebug() << "PutDeviceGrblSettings2";
+    if(arduino->getLine() != "ok")
+	return;
+    static int count = 1;
+    arduino->ChangeSetting(count, settings->Get(count + Settings::grblStepsX));
+    if(count == 9 || (count == 7 && arduino->GrblSettings.version == 0)) {
+	disconnect(arduino, SIGNAL(newData()), this, SLOT(PutDeviceGrblSettings2()));
+	count = 1;
+//	writingToArduino = false;
+    }
+    count ++;
+}
+
+void GrblCage::on_actionCheck_Settings_triggered()
+{
+    QObject::connect(arduino, SIGNAL(getDeviceGrblSettingsFinished()), this, SLOT(CheckMachine()));
+    arduino->RefreshSettings();
+
+}
+
+void GrblCage::on_pushButton_clicked()
+{
+    arduino->SeekAbsolute(0,0,settings->Get(Settings::preZMagnitude));
+}
+
+void GrblCage::on_actionConnect_triggered()
+{
+    arduino->OpenPort();
+    QObject::connect(arduino, SIGNAL(getDeviceGrblSettingsFinished()), this, SLOT(CheckMachine()));
+}
+
+void GrblCage::on_actionDisconnect_triggered()
+{
+    arduino->ClosePort();
 }

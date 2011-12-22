@@ -696,7 +696,7 @@ QString GCodeText::Preprocess()
     enum{Center, Radius};
     int arcMode = 9;
     int arcCenterMode = 9;
-    bool moveMode = 0;
+    int moveMode = 0;
     bool moveModeLast = 0;
     int coordinateMode = 9;
     int coordinateModeLast = 9;

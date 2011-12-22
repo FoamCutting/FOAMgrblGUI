@@ -13,3 +13,11 @@ QString GetNumString(QString gcodeString, int *pos)
     (*pos)--;	    //change gcode plot to make this unnecessary
     return numString;
 }
+
+bool CompareFloats(float x, float y)
+{
+    if (fabs(x - y) < 0.0001)
+	return true;
+    else
+	return false;
+}
