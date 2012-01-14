@@ -19,7 +19,9 @@ SOURCES += main.cpp\
     eventfilterizer.cpp \
     settings.cpp \
     arduinoio.cpp \
-    Toolbox.cpp
+    Toolbox.cpp \
+    machineselect.cpp \
+    newmachinedialog.cpp
 
 HEADERS  += \
     gcodeplot.h \
@@ -35,7 +37,9 @@ HEADERS  += \
     qextserialenumerator.h \
     qextserialport_global.h \
     arduinoio.h \
-    Toolbox.h
+    Toolbox.h \
+    machineselect.h \
+    newmachinedialog.h
 
 FORMS    += grblcage.ui \
     errorhandler.ui \

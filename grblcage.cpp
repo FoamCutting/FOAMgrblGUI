@@ -10,7 +10,7 @@ GrblCage::GrblCage(QWidget *parent) :
     editor = new GCodeText;
     err = new ErrorHandler;
     interceptor = new EventFilterizer;
-    settings = new Settings;
+    settings = new Settings();
     arduino = new ArduinoIO;
     plotter->setSettings(settings);
     editor->SetSettings(settings);
@@ -45,6 +45,7 @@ GrblCage::GrblCage(QWidget *parent) :
 
 GrblCage::~GrblCage()
 {
+    arduino->ClosePort();
     delete ui;
     delete plotter;
     delete editor;
@@ -331,7 +332,7 @@ void GrblCage::on_actionOpen_GCode_File_triggered()
 
 void GrblCage::on_actionSettings_triggered()
 {
-    if(arduino->DeviceState() == ArduinoIO::READY);
+    if(arduino->DeviceState() == ArduinoIO::READY)
     {
     }
     settings->show();
@@ -426,55 +427,55 @@ void GrblCage::on_zero_pButton_clicked()
 {
     //won't work with 0.51
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-	arduino << QString("G90 \n G92 X0\n G92 Y0\n G92 Z0\n");
+	arduino << QString("G90\nG92X0\nG92Y0\nG92Z").append(QString::number(-1*settings->Get(Settings::preZMagnitude))).append("\nG00X0Y0Z").append(QString::number(settings->Get(Settings::preZMagnitude)).append('\n'));
 }
 
 void GrblCage::on_jogYpositive_clicked()
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-        arduino->SeekRelative(0, _JogIncrement, 0);
+	arduino->SeekRelative(0, settings->Get(Settings::machJogIncrement), 0);
 }
 
 void GrblCage::on_jogXYpositive_clicked()
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-     arduino->SeekRelative(_JogIncrement, _JogIncrement, 0);
+     arduino->SeekRelative(settings->Get(Settings::machJogIncrement), settings->Get(Settings::machJogIncrement), 0);
 }
 
 void GrblCage::on_jogXnegativeYpositive_clicked()
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-        arduino->SeekRelative(-_JogIncrement, _JogIncrement, 0);
+	arduino->SeekRelative(-1*settings->Get(Settings::machJogIncrement), settings->Get(Settings::machJogIncrement), 0);
 }
 
 void GrblCage::on_jogXnegative_clicked()
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-        arduino->SeekRelative(-_JogIncrement, 0, 0);
+	arduino->SeekRelative(-1*settings->Get(Settings::machJogIncrement), 0, 0);
 }
 
 void GrblCage::on_jogXpositive_clicked()
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-        arduino->SeekRelative(_JogIncrement, 0, 0);
+	arduino->SeekRelative(settings->Get(Settings::machJogIncrement), 0, 0);
 }
 
 void GrblCage::on_jogXYnegative_clicked()
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-        arduino->SeekRelative(-_JogIncrement, -_JogIncrement, 0);
+	arduino->SeekRelative(-1*settings->Get(Settings::machJogIncrement), -1*settings->Get(Settings::machJogIncrement), 0);
 }
 
 void GrblCage::on_jogYnegative_clicked()
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-        arduino->SeekRelative(0, -_JogIncrement, 0);
+	arduino->SeekRelative(0, -1*settings->Get(Settings::machJogIncrement), 0);
 }
 
 void GrblCage::on_jogXpositiveYnegative_clicked()
 {
     if(arduino->DeviceState() == ArduinoIO::READY && !streamInProgress)
-        arduino->SeekRelative(_JogIncrement, -_JogIncrement, 0);
+	arduino->SeekRelative(settings->Get(Settings::machJogIncrement), -1*settings->Get(Settings::machJogIncrement), 0);
 }
 
 
@@ -555,6 +556,8 @@ bool GrblCage::CheckForUnsavedChanges()
 
 void GrblCage::CheckMachine()
 {
+    if(arduino->DeviceState() == ArduinoIO::DISCONNECTED)
+	return;
     if(arduino->GrblSettings == settings->GrblSettings())
 	qDebug() << "Machine Settings match Grbl Settings";
     else
@@ -569,6 +572,8 @@ void GrblCage::on_actionUpload_Settings_triggered()
 
 void GrblCage::PutDeviceGrblSettings()      //maybe write this functionality into the arduino class
 {
+    if(arduino->DeviceState() == ArduinoIO::DISCONNECTED)
+	return;
     arduino->Flush();
 //    writingToArduino = true;
     QObject::connect(arduino, SIGNAL(newData()), this, SLOT(PutDeviceGrblSettings2()));
@@ -586,6 +591,7 @@ void GrblCage::PutDeviceGrblSettings2()
     if(count == 9 || (count == 7 && arduino->GrblSettings.version == 0)) {
 	disconnect(arduino, SIGNAL(newData()), this, SLOT(PutDeviceGrblSettings2()));
 	count = 1;
+	return;
 //	writingToArduino = false;
     }
     count ++;
@@ -593,6 +599,8 @@ void GrblCage::PutDeviceGrblSettings2()
 
 void GrblCage::on_actionCheck_Settings_triggered()
 {
+    if(arduino->DeviceState() == ArduinoIO::DISCONNECTED)
+	return;
     QObject::connect(arduino, SIGNAL(getDeviceGrblSettingsFinished()), this, SLOT(CheckMachine()));
     arduino->RefreshSettings();
 
@@ -612,4 +620,19 @@ void GrblCage::on_actionConnect_triggered()
 void GrblCage::on_actionDisconnect_triggered()
 {
     arduino->ClosePort();
+}
+
+void GrblCage::on_actionLoad_Machine_triggered()
+{
+    MachineSelect *select;
+    select = new MachineSelect(settings->GetStr(Settings::globCurrentMach), this);
+    select->SetSettings(settings);
+    select->exec();
+}
+
+void GrblCage::on_actionNew_Machine_triggered()
+{
+    NewMachineDialog *dialog = new NewMachineDialog(this);
+    dialog->SetSettings(settings);
+    dialog->exec();
 }

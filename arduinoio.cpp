@@ -4,6 +4,7 @@ ArduinoIO::ArduinoIO(QObject *parent) :
     QObject(parent)
 {
     deviceState = DISCONNECTED;
+    GrblSettings.version = -1;
     connect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(SetDeviceState(int)));
 }
 
@@ -52,6 +53,8 @@ QList<QextPortInfo> ArduinoIO::GetPorts()
 
 bool ArduinoIO::OpenPort(int index)
 {
+    if(deviceState > 0)
+	ClosePort();
     GetPorts();
     if(ports.isEmpty())
 	return 0;
@@ -64,15 +67,15 @@ bool ArduinoIO::OpenPort(int index)
 //    if(settings->Get(Settings::ardBaudRate) = 9600)
 	arduinoPort->setBaudRate(BAUD9600);
     deviceState = arduinoPort->open(QIODevice::ReadWrite);
-//    QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings(deviceState)));
     if(deviceState) {
 	qDebug() << "Arduino Port Opened!";
 	emit deviceStateChanged(CONNECTED);
        // flush();
-	QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings()));
+//	QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings()));
 	connect(arduinoPort, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
 	QObject::connect(arduinoPort, SIGNAL(dsrChanged(bool)), this, SLOT(onDSRChanged(bool)));
     }
+    QTimer::singleShot(1000, this, SLOT(GetDeviceGrblSettings()));
     qDebug() << "Port Opened";
     return deviceState;
 }
@@ -92,6 +95,11 @@ void ArduinoIO::GetDeviceGrblSettings()
 {
     qDebug() << "GetDeviceGrblSettings1";
 
+//    if(GrblSettings.version == -1) {
+//	qDebug() << "Settings get aborted";
+//	QTimer::singleShot(500, this, SLOT(GetDeviceGrblSettings()));
+//	return;
+//    }
     if(DeviceState() == READY || DeviceState() == CHECKING || DeviceState() == CONNECTED) {
 	emit deviceStateChanged(BUSY);
 	Flush();
@@ -114,66 +122,83 @@ void ArduinoIO::GetDeviceGrblSettings()
 void ArduinoIO::GetDeviceGrblSettings2()
 {
     qDebug() << "GetDeviceGrblSettings2";
-
+    bool shortSettings = 0;
     QString line = getLine();
     int escape = 0;
     disconnect(this, SIGNAL(ok()), this, SLOT(GetDeviceGrblSettings2()));
 
     while(line != "ok")
     {
-	if(line != "")
-	    qDebug() << line << " -- from GDGS2";
+	qDebug() << line << " -- from GDGS2";
 	if(line.startsWith('$'))
 	{
-	    switch(line.at(1).digitValue())
-	    {
-	    case 0:
-//                qDebug() << line;
-		GrblSettings.stepsX = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
-		break;
-	    case 1:
-//                qDebug() << line;
-		GrblSettings.stepsY = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
-		break;
-	    case 2:
-//                qDebug() << line;
-		GrblSettings.stepsZ = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
-		break;
-	    case 3:
-//                qDebug() << line;
-		GrblSettings.stepPulse = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
-		break;
-	    case 4:
-//                qDebug() << line;
-		GrblSettings.feedRate = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
-		break;
-	    case 5:
-//                qDebug() << line;
-		GrblSettings.seekRate = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
-		break;
-	    case 6:
-//                qDebug() << line;
-		GrblSettings.arcSegment = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
-		break;
-	    case 7:
-//                qDebug() << line;
-		GrblSettings.stepInvert = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
-		break;
-	    case 8:
-//                qDebug() << line;
-		GrblSettings.acceleration = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
-		break;
-	    case 9:
-//                qDebug() << line;
-		GrblSettings.cornering = line.remove(line.indexOf('('), 75).remove(0,5).toFloat();
-		emit deviceStateChanged(READY);
-		emit getDeviceGrblSettingsFinished();
-		qDebug() << "GetDeviceGrblSettings2End";
-		return;
+	    if(line.length() > 1) {
+		switch(line.at(1).digitValue())
+		{
+		case 0:
+    //                qDebug() << line;
+		    GrblSettings.stepsX = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
+		    break;
+		case 1:
+    //                qDebug() << line;
+		    GrblSettings.stepsY = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
+		    break;
+		case 2:
+    //                qDebug() << line;
+		    GrblSettings.stepsZ = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
+		    break;
+		case 3:
+    //                qDebug() << line;
+		    GrblSettings.stepPulse = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
+		    break;
+		case 4:
+    //                qDebug() << line;
+		    GrblSettings.feedRate = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
+		    break;
+		case 5:
+    //                qDebug() << line;
+		    GrblSettings.seekRate = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
+		    break;
+		case 6:
+    //                qDebug() << line;
+		    GrblSettings.arcSegment = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
+		    break;
+		case 7:
+    //                qDebug() << line;
+		    GrblSettings.stepInvert = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
+		    if(shortSettings) {
+			GrblSettings.version = 0;
+			qDebug() << "Grbl version 0.51";
+			emit deviceStateChanged(READY);
+			emit getDeviceGrblSettingsFinished();
+			qDebug() << "GetDeviceGrblSettings2End";
+			return;
+		    }
+		    break;
+		case 8:
+    //                qDebug() << line;
+		    GrblSettings.acceleration = line.remove(line.indexOf('('), 50).remove(0,5).toFloat();
+		    break;
+		case 9:
+    //                qDebug() << line;
+		    if(line.contains("(max instant cornering speed change in delta mm/min)")) {
+			GrblSettings.version = 2;
+			qDebug() << "Grbl version 0.6b";
+		    }
+		    else
+			qDebug() <<"Grbl version 0.7d or 0.8a -- " << GrblSettings.version; //need to figure out how to differentiate between these versions
+		    GrblSettings.cornering = line.remove(line.indexOf('('), 75).remove(0,5).toFloat();
+		    emit deviceStateChanged(READY);
+		    emit getDeviceGrblSettingsFinished();
+		    qDebug() << "GetDeviceGrblSettings2End";
+		    return;
+		}
 	    }
+	    else
+		shortSettings = 1;
 	}
 	line = getLine();
-	if(escape > 1000) {
+	if(escape > 100) {
 	    qDebug() << "Failed to retrieve settings from " << arduinoPortName;
 	    break;
 	}
@@ -280,9 +305,9 @@ void ArduinoIO::onReadyRead()
         return;
     }
     else if(data == "'$' to dump current settings") {
-//        emit deviceStateChanged(CHECKING);
-//	GetDeviceGrblSettings();
-//        return;
+	emit deviceStateChanged(CHECKING);
+	GetDeviceGrblSettings();
+	return;
     }
     dataBuffer << data;
     emit newData();
@@ -323,21 +348,23 @@ ArduinoIO* &operator <<(ArduinoIO *output, const QString string) //could probabl
 
 void ArduinoIO::ClearGrblSettings()
 {
-    GrblSettings.stepsX = 0;
-    GrblSettings.stepsY = 0;
-    GrblSettings.stepsZ = 0;
+    GrblSettings.version = -1;
+    GrblSettings.stepsX = -1;
+    GrblSettings.stepsY = -1;
+    GrblSettings.stepsZ = -1;
     GrblSettings.stepPulse = 0;
-    GrblSettings.feedRate = 0;
-    GrblSettings.seekRate = 0;
-    GrblSettings.arcSegment = 0;
+    GrblSettings.feedRate = -1;
+    GrblSettings.seekRate = -1;
+    GrblSettings.arcSegment = -1;
     GrblSettings.stepInvert = 0;
-    GrblSettings.acceleration = 0;
+    GrblSettings.acceleration = -1;
     GrblSettings.cornering = -1;
 }
 
 int ArduinoIO::ChangeAllSettings(float, float, float, float, float, float, float, float, uint8_t, uint8_t)
 {
     QObject::connect(this, SIGNAL(ok()), this, SLOT());
+    return -1;
 }
 
 bool ArduinoIO::IsReady()

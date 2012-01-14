@@ -7,6 +7,7 @@
 #include "qextserialport.h"
 #include "errorhandler.h"
 #include <QTimer>
+#include <QProcess>
 #include "inttypes.h"
 #include "Toolbox.h"
 #include "settings.h"
@@ -16,6 +17,7 @@ class ArduinoIO : public QObject
     Q_OBJECT
 
 private:
+    QProcess *avrdude;
     QextSerialPort *arduinoPort;
     QString arduinoPortName;
     QList<QString> dataBuffer;

@@ -15,12 +15,10 @@
 #include "scaledialog.h"
 #include "eventfilterizer.h"
 #include "arduinoio.h"
+#include "machineselect.h"
+#include "newmachinedialog.h"
 #include <QScrollBar>
-
 #include <QDebug>
-
-#define _JogIncrement 0.25
-
 
 namespace Ui {
     class GrblCage;
@@ -92,14 +90,15 @@ private slots:
     void on_autoStop_pButton_clicked();
     void on_zero_pButton_clicked();
     void on_actionUpload_Settings_triggered();
-
     void on_actionCheck_Settings_triggered();
+    void on_actionConnect_triggered();
+    void on_actionDisconnect_triggered();
 
     void on_pushButton_clicked();
 
-    void on_actionConnect_triggered();
+    void on_actionLoad_Machine_triggered();
 
-    void on_actionDisconnect_triggered();
+    void on_actionNew_Machine_triggered();
 
 signals:
     void GCodeDocumentAltered();

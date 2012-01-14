@@ -14,17 +14,130 @@
    <string>Settings</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
-   <item row="0" column="1">
-    <widget class="QTabWidget" name="tabWidget">
+   <item row="0" column="0">
+    <widget class="QTabWidget" name="settings_tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
+     <widget class="QWidget" name="globalSettings_tab">
+      <attribute name="title">
+       <string>Global</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_24">
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Current Machine</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_25">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="currentMachName_label">
+           <property name="text">
+            <string>current</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_26">
+         <item>
+          <spacer name="horizontalSpacer_26">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="setMachDefault_pButton">
+           <property name="text">
+            <string>set as default</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_25">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Default Machine</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_24">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="defaultMachName_label">
+           <property name="text">
+            <string>default</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="Line" name="line_5">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>323</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="generalSettings_tab">
       <attribute name="title">
        <string>General</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_15">
          <item>
           <widget class="QLabel" name="label_10">
@@ -62,7 +175,7 @@
          </item>
         </layout>
        </item>
-       <item row="1" column="0">
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_16">
          <item>
           <widget class="QLabel" name="label_17">
@@ -99,14 +212,14 @@
          </item>
         </layout>
        </item>
-       <item row="2" column="0">
+       <item>
         <widget class="Line" name="line">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_17">
          <item>
           <widget class="QLabel" name="label_12">
@@ -159,7 +272,7 @@
          </item>
         </layout>
        </item>
-       <item row="4" column="0">
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_18">
          <item>
           <widget class="QLabel" name="label_13">
@@ -209,7 +322,7 @@
          </item>
         </layout>
        </item>
-       <item row="5" column="0">
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_19">
          <item>
           <widget class="QLabel" name="label_14">
@@ -259,14 +372,14 @@
          </item>
         </layout>
        </item>
-       <item row="6" column="0">
+       <item>
         <widget class="Line" name="line_2">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
-       <item row="7" column="0">
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_14">
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -342,7 +455,41 @@
          </item>
         </layout>
        </item>
-       <item row="9" column="0">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_23">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Jog Increment</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_23">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QDoubleSpinBox" name="jogIncrement_dBox"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="Line" name="line_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_21">
          <item>
           <widget class="QLabel" name="label_18">
@@ -376,7 +523,7 @@
          </item>
         </layout>
        </item>
-       <item row="10" column="0">
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_22">
          <item>
           <widget class="QLabel" name="label_19">
@@ -409,20 +556,14 @@
          </item>
         </layout>
        </item>
-       <item row="13" column="0">
-        <spacer name="verticalSpacer">
+       <item>
+        <widget class="Line" name="line_4">
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Horizontal</enum>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
+        </widget>
        </item>
-       <item row="14" column="0">
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_20">
          <item>
           <spacer name="horizontalSpacer_19">
@@ -445,20 +586,6 @@
           </widget>
          </item>
         </layout>
-       </item>
-       <item row="8" column="0">
-        <widget class="Line" name="line_3">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="0">
-        <widget class="Line" name="line_4">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>
@@ -1042,7 +1169,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab">
+     <widget class="QWidget" name="PreprocessSettings_tab">
       <attribute name="title">
        <string>Pre-Process</string>
       </attribute>

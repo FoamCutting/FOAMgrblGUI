@@ -57,17 +57,20 @@ public:
 //        bool operator==(grblSettings);
 //        bool CompareFloats(float, float);
 //    };
-    enum{machSizeUnits, machSizeX, machSizeY,
+    enum{machSizeUnits, machSizeX, machSizeY, machJogIncrement,
 	 plotGridUnits, plotGridColor, plotMoveColor, plotCutColor, plotArcPrecision,
 	 ardPortName, ardBaudRate,
 	 preEnabled, preOptimize, preCheckCompatibility, preAlwaysDefaultFeed, preRemoveLineNum, preRemoveUnnecessary, preRemoveUnsupported,
 	 preRemoveArcs, preArcSegments, preUniformZ, preZMagnitude, preSaveFile, preFileAppend,
-	 grblVersion, grblStepsX, grblStepsY, grblStepsZ, grblStepPulse, grblFeedRate, grblSeekRate, grblArcSegment, grblStepInvert, grblAcceleration, grblCornering
+	 grblVersion, grblStepsX, grblStepsY, grblStepsZ, grblStepPulse, grblFeedRate, grblSeekRate, grblArcSegment, grblStepInvert, grblAcceleration, grblCornering,
+	 SEPARATOR,
+	 globDefaultMach, globCurrentMach
     };
     struct machineSettings{
 	bool units;
 	float sizeX;
 	float sizeY;
+	float jogIncrement;
     };
     struct plotSettings {
 	bool gridUnits;
@@ -111,19 +114,35 @@ public:
 	float zMagnitude;
 	bool saveFile;
 	QString fileAppend;
-};
+    };
+    struct globalSettings
+    {
+	QString defaultMachine;
+	QString currentMachine;
+    };
+
     void SetErrorHandler(ErrorHandler*);
     QString GetStr(int);
     float Get(int);
     grblSettings GrblSettings();
+    QString MachineName() {
+	return settings.global.currentMachine;
+    }
+    void setMachineName(QString name) {
+	settings.global.currentMachine = name;
+    }
+    QDir ApplicationDirectory() {
+	return applicationDirectory;
+    }
 
     //    bool CompareFloats(float, float);
 
 
 private:
+    QWidget *par;
     static QString filePath;
-    static QString currentMachineName;
     static QDir applicationDirectory;
+
     class allSettings{
     public:
 	machineSettings machine;
@@ -131,11 +150,16 @@ private:
 	arduinoSettings arduino;
 	preprocessSettings preprocess;
 	grblSettings grbl;
+	globalSettings global;
     }settings,defaultSettings;
     Ui::Settings *ui;
     QFile* machineFile;
-    inline int OpenFile();
-    inline int CloseFile();
+    QFile* globalFile;
+
+    inline int OpenMachineFile();
+    inline int CloseMachineFile();
+    inline int OpenGlobalFile();
+    inline int CloseGlobalFile();
 
     QString GetSettingStr(int);
     template<typename T>
@@ -145,6 +169,12 @@ private:
     void PutSettingStr(QString description, int index, QString setting);
     int GetAllSettings();
     int SaveAllSettings();
+
+    int GetGlobalSettings();
+    int PutGlobalSettings();
+    void SaveGlobalSettings();
+    void DisplayGlobalSettings();
+
 
     void GetGrblSettings();
     void PutGrblSettings();
@@ -177,6 +207,8 @@ protected:
     void showEvent(QShowEvent *);
     void closeEvent(QCloseEvent*);
 
+public slots:
+
 private slots:
     void on_grblSave_pButton_clicked();
     void on_gridColor_tButton_clicked();
@@ -186,6 +218,8 @@ private slots:
     void on_refreshArduinoPortList_tButton_clicked();
     void on_grblVerson_combo_currentIndexChanged(int index);
     void on_preProcSave_pButton_clicked();
+
+    void on_setMachDefault_pButton_clicked();
 
 signals:
     void settingsHidden();

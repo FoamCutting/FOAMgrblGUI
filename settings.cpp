@@ -1,12 +1,12 @@
 #include "settings.h"
 #include "ui_settings.h"
 
-QString Settings::currentMachineName = "Machine0.txt";
 QDir Settings::applicationDirectory = QDir("");
 Settings::Settings(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Settings)
 {
+    settings.global.currentMachine = "NoMachine.none";
     ui->setupUi(this);
     ui->stepMask_lineEdit->setInputMask("BBBBBBBB");
     applicationDirectory = QDir(QCoreApplication::applicationDirPath());
@@ -14,6 +14,7 @@ Settings::Settings(QWidget *parent) :
     this->setWindowFlags(flags);
     writingToArduino = false;
     GetAllSettings();
+    settings.global.currentMachine = settings.global.defaultMachine;
     on_grblVerson_combo_currentIndexChanged(ui->grblVerson_combo->currentIndex());
 }
 
@@ -38,6 +39,7 @@ void Settings::closeEvent(QCloseEvent *event)
 void Settings::showEvent(QShowEvent *event)
 {
     GetAllSettings();
+    DisplayGlobalSettings();
     DisplayGeneralSettings();
     DisplayGrblSettings();
     DisplayPreprocessSettings();
@@ -57,32 +59,73 @@ void Settings::hideEvent(QHideEvent *event)
 
 /** ********************(File i/o)******************** **/
 
-inline int Settings::OpenFile()
+inline int Settings::OpenMachineFile()
 {
-    qDebug() << "Open File";
-    bool first = 0;
+    qDebug() << "Open Machine File";
     if(!QDir("MachineSettings").exists())
         QDir().mkdir("MachineSettings");
     QDir::setCurrent("MachineSettings");
 //    if(!QDir(currentMachineName).exists()) {
 //        first = 1;}
-    machineFile = new QFile(currentMachineName);
+    machineFile = new QFile(settings.global.currentMachine);
     if(!machineFile->open(QIODevice::ReadWrite | QIODevice::Text)) {
 //        qDebug() << "file not open";
         return -1; }
     QDir::setCurrent(applicationDirectory.absolutePath());
-    if(first) {
-
-    }
-//    qDebug() << "file opened";
     return 0;
 }
 
-inline int Settings::CloseFile()
+inline int Settings::CloseMachineFile()
 {
-    qDebug() << "Close File";
+    qDebug() << "Close Machine File";
     machineFile->close();
     return 0;
+}
+
+inline int Settings::OpenGlobalFile()
+{
+    qDebug() << "Open Global File";
+    QDir::setCurrent(applicationDirectory.absolutePath());
+    globalFile = new QFile("GlobalSettings");
+    if(!globalFile->open(QIODevice::ReadWrite | QIODevice::Text)) {
+//        qDebug() << "Global file not open";
+	return -1; }
+    return 0;
+}
+
+inline int Settings::CloseGlobalFile()
+{
+    qDebug() << "Close Global File";
+    globalFile->close();
+    return 0;
+}
+
+/** ********************( Global Settings )******************** **/
+
+int Settings::PutGlobalSettings()
+{
+    OpenGlobalFile();
+    PutSettingStr("Default Machine File", globDefaultMach, settings.global.defaultMachine);
+    CloseGlobalFile();
+    return 0;
+}
+
+int Settings::GetGlobalSettings()
+{
+    OpenGlobalFile();
+    settings.global.defaultMachine = GetSettingStr(globDefaultMach);
+    CloseGlobalFile();
+    return 0;
+}
+
+void Settings::DisplayGlobalSettings()
+{
+    ui->defaultMachName_label->setText(settings.global.defaultMachine);
+    ui->currentMachName_label->setText(settings.global.currentMachine);
+}
+
+void Settings::SaveGlobalSettings()
+{
 }
 
 /** ******************** Grbl Setttings ******************** **/
@@ -93,7 +136,7 @@ Settings::grblSettings Settings::GrblSettings()
 
 void Settings::GetGrblSettings()
 {
-    OpenFile();
+    OpenMachineFile();
     settings.grbl.version = GetSetting<int>(grblVersion);
     settings.grbl.stepsX = GetSetting<float>(grblStepsX);
     settings.grbl.stepsY = GetSetting<float>(grblStepsY);
@@ -105,12 +148,12 @@ void Settings::GetGrblSettings()
     settings.grbl.cornering = GetSetting<float>(grblCornering);
     settings.grbl.stepInvert = GetSetting<uint8_t>(grblStepInvert);
     settings.grbl.stepPulse = GetSetting<uint8_t>(grblStepPulse);
-    CloseFile();
+    CloseMachineFile();
 }
 
 void Settings::PutGrblSettings()
 {
-    OpenFile();
+    OpenMachineFile();
     PutSetting("Grbl Version", grblVersion, settings.grbl.version);
     PutSetting("Steps per mm X", grblStepsX, settings.grbl.stepsX);
     PutSetting("Steps per mm Y", grblStepsY, settings.grbl.stepsY);
@@ -122,7 +165,7 @@ void Settings::PutGrblSettings()
     PutSetting("Cornering Tolerance?", grblCornering, settings.grbl.cornering);
     PutSetting("Step Pulse Width (us)", grblStepPulse, settings.grbl.stepPulse);
     PutSetting("Step Invert Mask", grblStepInvert, settings.grbl.stepInvert);
-    CloseFile();
+    CloseMachineFile();
 }
 
 void Settings::DisplayGrblSettings()
@@ -158,7 +201,6 @@ void Settings::SaveGrblSettings()
 
 void Settings::AdjustForGrblVersion()
 {
-
 }
 
 void Settings::on_grblSave_pButton_clicked()
@@ -189,16 +231,24 @@ void Settings::on_grblVerson_combo_currentIndexChanged(int index)   //disable se
 	ui->maxJerk_label->setEnabled(true);
 	ui->maxJerk_label->setText("Cornering Junction Deviance (mm)");
     }
+    else if(index == 3) {
+	ui->acceleration_dspinbox->setEnabled(true);
+	ui->acceleration_label->setEnabled(true);
+	ui->maxJerk_dspinbox->setEnabled(true);
+	ui->maxJerk_label->setEnabled(true);
+	ui->maxJerk_label->setText("Cornering Junction Deviance (mm)");
+    }
 }
 
 /** ******************** General Settings ******************** **/
 
 void Settings::GetGeneralSettings()
 {
-    OpenFile();
+    OpenMachineFile();
     settings.machine.units = GetSetting<bool>(machSizeUnits);
     settings.machine.sizeX = GetSetting<float>(machSizeX);
     settings.machine.sizeY = GetSetting<float>(machSizeY);
+    settings.machine.jogIncrement = GetSetting<float>(machJogIncrement);
     settings.plot.gridUnits = GetSetting<bool>(plotGridUnits);
     settings.plot.gridColor = GetSettingStr(plotGridColor);
     settings.plot.moveColor = GetSettingStr(plotMoveColor);
@@ -206,15 +256,16 @@ void Settings::GetGeneralSettings()
     settings.plot.arcPrecision = GetSetting<float>(plotArcPrecision);
     settings.arduino.portName = GetSettingStr(ardPortName);
     settings.arduino.baudRate = GetSetting<int>(ardBaudRate);
-    CloseFile();
+    CloseMachineFile();
 }
 
 void Settings::PutGeneralSettings()
 {
-    OpenFile();
+    OpenMachineFile();
     PutSetting("Machine Size Units", machSizeUnits, settings.machine.units);
     PutSetting("Machine X Size", machSizeX, settings.machine.sizeX);
     PutSetting("Machine Y Size", machSizeY, settings.machine.sizeY);
+    PutSetting("Jog Increment", machJogIncrement, settings.machine.jogIncrement);
     PutSetting("Grid Units", plotGridUnits, settings.plot.gridUnits);
     PutSettingStr("Grid Color", plotGridColor, settings.plot.gridColor);
     PutSettingStr("Seek Color", plotMoveColor, settings.plot.moveColor);
@@ -222,7 +273,7 @@ void Settings::PutGeneralSettings()
     PutSetting("Arc Precision", plotArcPrecision, settings.plot.arcPrecision);
     PutSettingStr("Default Port Name", ardPortName, settings.arduino.portName);
     PutSetting("Default Baud Rate", ardBaudRate, settings.arduino.baudRate);
-    CloseFile();
+    CloseMachineFile();
 }
 
 void Settings::DisplayGeneralSettings()
@@ -230,6 +281,7 @@ void Settings::DisplayGeneralSettings()
     ui->machineUnits_combo->setCurrentIndex(settings.machine.units);
     ui->sizeX_dBox->setValue(settings.machine.sizeX);
     ui->sizeY_dBox->setValue(settings.machine.sizeY);
+    ui->jogIncrement_dBox->setValue(settings.machine.jogIncrement);
     ui->gridUnits_combo->setCurrentIndex(settings.plot.gridUnits);
     ui->gridColor_lEdit->setText(settings.plot.gridColor);
     ui->moveColor_lEdit->setText(settings.plot.moveColor);
@@ -245,6 +297,7 @@ void Settings::SaveGeneralSettings()
     settings.machine.units = ui->machineUnits_combo->currentIndex();
     settings.machine.sizeX = ui->sizeX_dBox->value();
     settings.machine.sizeY = ui->sizeY_dBox->value();
+    settings.machine.jogIncrement = ui->jogIncrement_dBox->value();
     settings.plot.gridUnits = ui->gridUnits_combo->currentIndex();
     settings.plot.gridColor = ui->gridColor_lEdit->text();
     settings.plot.moveColor = ui->moveColor_lEdit->text();
@@ -297,7 +350,7 @@ void Settings::on_moveColor_tButton_clicked()
 
 void Settings::GetPreprocessSettings()
 {
-    OpenFile();
+    OpenMachineFile();
     settings.preprocess.enabled = GetSetting<bool>(preEnabled);
     settings.preprocess.optimize = GetSetting<bool>(preOptimize);
     settings.preprocess.checkCompatibility = GetSetting<bool>(preCheckCompatibility);
@@ -310,12 +363,12 @@ void Settings::GetPreprocessSettings()
     settings.preprocess.zMagnitude = GetSetting<float>(preZMagnitude);
     settings.preprocess.saveFile = GetSetting<bool>(preSaveFile);
     settings.preprocess.fileAppend = GetSettingStr(preFileAppend);
-    CloseFile();
+    CloseMachineFile();
 }
 
 void Settings::PutPreprocessSettings()
 {
-    OpenFile();
+    OpenMachineFile();
     PutSetting("Preprocess Enabled", preEnabled, settings.preprocess.enabled);
     PutSetting("Optimize Enabled", preOptimize, settings.preprocess.optimize);
     PutSetting("Check Compatibility", preCheckCompatibility, settings.preprocess.checkCompatibility);
@@ -329,7 +382,7 @@ void Settings::PutPreprocessSettings()
     PutSetting("Magnitude of Uniform Z Changes", preZMagnitude, settings.preprocess.zMagnitude);
     PutSetting("Save Modified File", preSaveFile, settings.preprocess.saveFile);
     PutSettingStr("Append to Modified File",preFileAppend, settings.preprocess.fileAppend);
-    CloseFile();
+    CloseMachineFile();
 }
 
 void Settings::DisplayPreprocessSettings()
@@ -403,6 +456,15 @@ QString Settings::GetStr(int sett)
     case plotCutColor:
 	return settings.plot.cutColor;
 	break;
+    case globDefaultMach:
+	return settings.global.defaultMachine;
+	break;
+    case globCurrentMach:
+	return settings.global.currentMachine;
+	break;
+    default:
+	return QString("ERROR!");
+	break;
     }
 }
 float Settings::Get(int sett)
@@ -417,6 +479,9 @@ float Settings::Get(int sett)
 	break;
     case machSizeY:
 	return settings.machine.sizeY;
+	break;
+    case machJogIncrement:
+	return settings.machine.jogIncrement;
 	break;
     case plotGridUnits:
 	return settings.plot.gridUnits;
@@ -494,34 +559,54 @@ float Settings::Get(int sett)
 	return settings.grbl.cornering;
 	break;
     default:
-	return 0;
+	return -1;
+	break;
     }
 }
 
 int Settings::GetAllSettings()
 {
+    GetGlobalSettings();
     GetGeneralSettings();
     GetGrblSettings();
     GetPreprocessSettings();
+    return 0;
 }
 
 QString Settings::GetSettingStr(int index)
 {
     QString buffer;
     int pos = 0;
-    machineFile->seek(index*50);
-    buffer = machineFile->readLine(50);
-    while(buffer[pos] != '=')
-    {
+    if(index < SEPARATOR)  {
+	machineFile->seek(index*50);
+	buffer = machineFile->readLine(50);
+	while(buffer[pos] != '=')
+	{
+	    pos++;
+	    if(pos > 50)
+		return QString("Error");
+	}
 	pos++;
-	if(pos > 50)
-	    return QString("Error");
+	while(buffer[pos] == ' ')
+	    pos++;
+	buffer.remove(0, (pos-1));
+	return buffer.trimmed();
     }
-    pos++;
-    while(buffer[pos] == ' ')
+    else  {
+	globalFile->seek((index-(SEPARATOR+1))*50);
+	buffer = globalFile->readLine(50);
+	while(buffer[pos] != '=')
+	{
+	    pos++;
+	    if(pos > 50)
+		return QString("Error");
+	}
 	pos++;
-    buffer.remove(0, (pos-1));
-    return buffer.trimmed();
+	while(buffer[pos] == ' ')
+	    pos++;
+	buffer.remove(0, (pos-1));
+	return buffer.trimmed();
+    }
 }
 
 template <typename T>
@@ -551,11 +636,21 @@ void Settings::PutSettingStr(QString description, int index, QString setting)
 {
     char s[] = {' ', '\0'};
     description += " = ";
-    machineFile->seek(index*50);
-    machineFile->write(QByteArray(description.toAscii()) + setting.toAscii());
-    while(machineFile->pos() < index*50 + 49)
-	machineFile->write(s);
-    machineFile->write(QByteArray("\n"));
+    if(index < SEPARATOR)  {
+	machineFile->seek(index*50);
+	machineFile->write(QByteArray(description.toAscii()) + setting.toAscii());
+	while(machineFile->pos() < index*50 + 49)
+	    machineFile->write(s);
+	machineFile->write(QByteArray("\n"));
+    }
+    else  {
+	globalFile->seek((index-(SEPARATOR+1))*50);
+	globalFile->write(QByteArray(description.toAscii()) + setting.toAscii());
+
+	while(globalFile->pos() < (index-(SEPARATOR+1))*50 + 49)
+	    globalFile->write(s);
+	globalFile->write(QByteArray("\n"));
+    }
 }
 
 template<typename S>
@@ -580,11 +675,11 @@ int Settings::SaveAllSettings()
 {
     SaveGeneralSettings();
     SaveGrblSettings();
+    return 0;
 }
 
 bool Settings::grblSettings::operator== (grblSettings other)
 {
-    bool status = 0;
     if( version != other.version ||
 	!CompareFloats(stepsX, other.stepsX) ||
 	!CompareFloats(stepsY, other.stepsY) ||
@@ -596,7 +691,6 @@ bool Settings::grblSettings::operator== (grblSettings other)
 	stepInvert != other.stepInvert )
     {
 	qDebug() << "False -- grblSettings operator==()";
-	status = 1;
 	return false;
     }
     else if(version != 0)
@@ -605,10 +699,14 @@ bool Settings::grblSettings::operator== (grblSettings other)
 	   !CompareFloats(cornering, other.cornering))
 	{
 	    qDebug() << "False -- grblSettings operator==()";
-	    status = 1;
 	    return false;
 	}
     }
     qDebug() << "True -- grblSettings operator==()";
     return true;
+}
+
+void Settings::on_setMachDefault_pButton_clicked()
+{
+    settings.global.defaultMachine = settings.global.currentMachine;
 }
