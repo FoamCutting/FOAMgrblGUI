@@ -61,7 +61,8 @@ bool ArduinoIO::OpenPort(int index)
     if(ports.isEmpty())
 	return 0;
     arduinoPortName = ports.at(index).physName;
-    arduinoPort = new QextSerialPort(arduinoPortName);
+    arduinoPort = new AbstractSerial();
+    arduinoPort->setDeviceName(arduinoPortName);
     arduinoPort->setFlowControl(FLOW_XONXOFF);
     arduinoPort->setParity(PAR_NONE);
     arduinoPort->setDataBits(DATA_8);

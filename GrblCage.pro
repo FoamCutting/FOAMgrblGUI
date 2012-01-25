@@ -33,9 +33,6 @@ HEADERS  += \
     grblcage.h \
     eventfilterizer.h \
     settings.h \
-    qextserialport.h \
-    qextserialenumerator.h \
-    qextserialport_global.h \
     arduinoio.h \
     Toolbox.h \
     machineselect.h \

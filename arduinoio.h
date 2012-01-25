@@ -24,9 +24,8 @@ class ArduinoIO : public QObject
     Q_OBJECT
 
 private:
-    AbstractSerial *arduinoPort2;
+    AbstractSerial *arduinoPort;
     QProcess *avrdude;
-    QextSerialPort *arduinoPort;
     QString arduinoPortName;
     QList<QString> dataBuffer;
     int deviceState;
