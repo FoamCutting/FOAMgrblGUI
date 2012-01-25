@@ -748,7 +748,6 @@ QString GCodeText::Preprocess()
        case 'Z':case 'z':
        {
 	   endCoord[2] = GetNumString(gcodeString, &position);
-
        }
 	   break;
        case 'R':case 'r':
@@ -811,10 +810,13 @@ QString GCodeText::Preprocess()
 	       }
 	       else {
     //	   make z changes uniform for foam cutting
+		   float num = settings->Get(Settings::preZMagnitude);
+		   if(unitMode == 1)
+		       num *= 25.4;
 		   if(endCoord[2] > startCoord[2])
-		       processedString.append('Z').append(QString::number(settings->Get(Settings::preZMagnitude)));
+		       processedString.append('Z').append(QString::number(num));
 		   else if(endCoord[2] < startCoord[2])
-		       processedString.append("Z-").append(QString::number(settings->Get(Settings::preZMagnitude)));
+		       processedString.append("Z-").append(QString::number(num));
 	       }
 	       changed =1;
 	   }

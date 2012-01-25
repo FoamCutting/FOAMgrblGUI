@@ -24,6 +24,7 @@ private:
     Settings *settings;
 
 signals:
+    void machineChanged();
 
 public slots:
 

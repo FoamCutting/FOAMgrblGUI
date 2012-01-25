@@ -10,6 +10,8 @@ ArduinoIO::ArduinoIO(QObject *parent) :
 
 ArduinoIO::~ArduinoIO()
 {
+    if(deviceState > DISCONNECTED)
+	ClosePort();
 }
 
 void ArduinoIO::SetErrorHandler(ErrorHandler *handler)
@@ -316,9 +318,9 @@ void ArduinoIO::onReadyRead()
 void ArduinoIO::onDSRChanged(bool x)
 {
     if(!x)
-	qDebug() << "Arduino disconnected!";
+	qDebug() << "Arduino disconnected! -- dsr";
     else
-	qDebug() << "??????";
+	qDebug() << "?????? -- dsr";
 }
 
 void ArduinoIO::SeekRelative(double dX, double dY, double dZ)

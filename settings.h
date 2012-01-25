@@ -167,7 +167,7 @@ private:
     template<typename S>
     void PutSetting(QString description, int index, S setting, bool convertToString = 1);
     void PutSettingStr(QString description, int index, QString setting);
-    int GetAllSettings();
+    int GetMachineSettings();
     int SaveAllSettings();
 
     int GetGlobalSettings();

@@ -18,6 +18,7 @@ GrblCage::GrblCage(QWidget *parent) :
     arduino->OpenPort();
     settings->SetErrorHandler(err);
     streamInProgress = 0;
+    deviceStatus = new QLabel(QString("device status"));
 
     GCodeFile = new QFile;
     GCodeDocument = new QTextDocument;
@@ -32,20 +33,24 @@ GrblCage::GrblCage(QWidget *parent) :
     QObject::connect(interceptor, SIGNAL(mouseMiddleClickIntercept(QPoint)),this,SLOT(panStart(QPoint)));
     QObject::connect(interceptor, SIGNAL(mouseMiddleReleaseIntercept()),this,SLOT(panEnd()));
     QObject::connect(interceptor, SIGNAL(resizeIntercept()),this,SLOT(AdjustForResize()));
+    QObject::connect(ui->gcodePlotter->horizontalScrollBar(), SIGNAL(sliderReleased()), this, SLOT(ScrollBarsMoved()));
+    QObject::connect(ui->gcodePlotter->verticalScrollBar(), SIGNAL(sliderReleased()), this, SLOT(ScrollBarsMoved()));
 
     QObject::connect(settings,SIGNAL(settingsHidden()),this,SLOT(EnableMainWindow()));
     QObject::connect(settings, SIGNAL(plotSettingsChanged()), this, SLOT(refreshPlot()));
     QObject::connect(settings, SIGNAL(plotSettingsChanged()), this, SLOT(GetGridScale()));
 
     QObject::connect(arduino, SIGNAL(getDeviceGrblSettingsFinished()), this, SLOT(CheckMachine()));
+    QObject::connect(arduino, SIGNAL(deviceStateChanged(int)), this, SLOT(UpdateDeviceStatusBar()));
     GetGridScale();
 
+    UpdateTitleBar();
+    statusBar()->addPermanentWidget(deviceStatus);
     statusBar()->showMessage("GrblCage initiated");
 }
 
 GrblCage::~GrblCage()
 {
-    arduino->ClosePort();
     delete ui;
     delete plotter;
     delete editor;
@@ -120,7 +125,7 @@ void GrblCage::SetCenter(const QPointF& centerPoint)
     //Get the rectangle of the visible area in scene coords
     QRectF visibleArea = ui->gcodePlotter->mapToScene(ui->gcodePlotter->rect()).boundingRect();
 
-    //Get the scene areag53
+    //Get the scene area
     QRectF sceneBounds = ui->gcodePlotter->sceneRect();
 
     double boundX = visibleArea.width() / 2.0;
@@ -131,44 +136,45 @@ void GrblCage::SetCenter(const QPointF& centerPoint)
     //The max boundary that the centerPoint can be to
     QRectF bounds(boundX, boundY, boundWidth, boundHeight);
 
-    if(bounds.contains(centerPoint)) {
-        //We are within the bounds
-        currentCenterPoint = centerPoint;
-    }
-    else
-    {
-        //We need to clamp or use the center of the screen
-        if(visibleArea.contains(sceneBounds))
-        {
-            //Use the center of scene ie. we can see the whole scene
-            currentCenterPoint = sceneBounds.center();
-        }
-        else
-        {
+    currentCenterPoint = centerPoint;
 
-            currentCenterPoint = centerPoint;
+//    if(bounds.contains(centerPoint)) {
+//        //We are within the bounds
+//        currentCenterPoint = centerPoint;
+//    }
+//    else
+//    {
+//	//We need to clamp or use the center of the screen
+//	if(visibleArea.contains(sceneBounds))
+//	{
+//	    //Use the center of scene ie. we can see the whole scene
+//	    currentCenterPoint = sceneBounds.center();
+//	}
+//	else
+//	{
 
-            //We need to clamp the center. The centerPoint is too large
-            if(centerPoint.x() > bounds.x() + bounds.width())
-            {
-                currentCenterPoint.setX(bounds.x() + bounds.width());
-            }
-            else if(centerPoint.x() < bounds.x())
-            {
-                currentCenterPoint.setX(bounds.x());
-            }
 
-            if(centerPoint.y() > bounds.y() + bounds.height())
-            {
-                currentCenterPoint.setY(bounds.y() + bounds.height());
-            }
-            else if(centerPoint.y() < bounds.y())
-            {
-                currentCenterPoint.setY(bounds.y());
-            }
+//	    //We need to clamp the center. The centerPoint is too large
+//	    if(centerPoint.x() > bounds.x() + bounds.width())
+//	    {
+//		currentCenterPoint.setX(bounds.x() + bounds.width());
+//	    }
+//	    else if(centerPoint.x() < bounds.x())
+//	    {
+//		currentCenterPoint.setX(bounds.x());
+//	    }
 
-        }
-    }
+//	    if(centerPoint.y() > bounds.y() + bounds.height())
+//	    {
+//		currentCenterPoint.setY(bounds.y() + bounds.height());
+//	    }
+//	    else if(centerPoint.y() < bounds.y())
+//	    {
+//		currentCenterPoint.setY(bounds.y());
+//	    }
+
+//	}
+//    }
 
     //Update the scrollbars
     ui->gcodePlotter->centerOn(currentCenterPoint);
@@ -224,6 +230,16 @@ void GrblCage::AdjustForResize()
     //Get the rectangle of the visible area in scene coords
     QRectF visibleArea = ui->gcodePlotter->mapToScene(ui->gcodePlotter->rect()).boundingRect();
     SetCenter(visibleArea.center());
+}
+
+void GrblCage::ScrollBarsMoved()
+{
+    qDebug() << "ScrollBar Moved";
+    QScrollBar *hbar = ui->gcodePlotter->horizontalScrollBar();
+    QScrollBar *vbar = ui->gcodePlotter->verticalScrollBar();
+    QPointF barPoint((float)ui->gcodePlotter->sceneRect().width() * hbar->sliderPosition()/abs(abs(hbar->maximum())-abs(hbar->minimum())), -1*((float)ui->gcodePlotter->sceneRect().height() + ui->gcodePlotter->sceneRect().height() * (abs(vbar->sliderPosition())-abs(vbar->minimum()))/abs(abs(vbar->maximum())-abs(vbar->minimum()))));
+    qDebug() << barPoint << " -- " << ui->gcodePlotter->sceneRect();
+    SetCenter(barPoint);
 }
 
 
@@ -626,6 +642,7 @@ void GrblCage::on_actionLoad_Machine_triggered()
 {
     MachineSelect *select;
     select = new MachineSelect(settings->GetStr(Settings::globCurrentMach), this);
+    connect(select, SIGNAL(machineChanged()), this, SLOT(UpdateTitleBar()));
     select->SetSettings(settings);
     select->exec();
 }
@@ -633,6 +650,39 @@ void GrblCage::on_actionLoad_Machine_triggered()
 void GrblCage::on_actionNew_Machine_triggered()
 {
     NewMachineDialog *dialog = new NewMachineDialog(this);
+    connect(dialog, SIGNAL(machineChanged()), this, SLOT(UpdateTitleBar()));
     dialog->SetSettings(settings);
     dialog->exec();
+}
+
+void GrblCage::UpdateTitleBar()
+{
+    this->setWindowTitle(QString("GrblCage -- ").append(settings->GetStr(Settings::globCurrentMach)));
+    disconnect(this, SLOT(UpdateTitleBar()));
+}
+
+void GrblCage::UpdateDeviceStatusBar()
+{
+    if(arduino->DeviceState() > ArduinoIO::DISCONNECTED)
+	deviceStatus->setText(arduino->portName().prepend("Connected to "));
+    else
+	deviceStatus->setText(QString("disconnected"));
+    switch(arduino->DeviceState())
+    {
+    case ArduinoIO::DISCONNECTED:
+	deviceStatus->setText(QString("disconnected"));
+	break;
+    case ArduinoIO::CONNECTED:
+	deviceStatus->setText(arduino->portName().prepend("Connected to "));
+	break;
+    case ArduinoIO::CHECKING:
+	deviceStatus->setText(arduino->portName().prepend("Verifying "));
+	break;
+    case ArduinoIO::BUSY:
+	deviceStatus->setText(arduino->portName().prepend("Busy on "));
+	break;
+    case ArduinoIO::READY:
+	deviceStatus->setText(arduino->portName().prepend("Ready on "));
+	break;
+    }
 }

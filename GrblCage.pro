@@ -53,6 +53,9 @@ RESOURCES +=
 
 
 
-LIBS += -lqextserialport
+LIBS += -lqextserialport -lqserialdevice
 unix:DEFINES = _TTY_POSIX_
 win32:DEFINES = _TTY_WIN_ QWT_DLL QT_DLL
+
+INCLUDEPATH += ../qserialdevice/src/qserialdevice\
+    ../qserialdevice/src/qserialdeviceenumerator

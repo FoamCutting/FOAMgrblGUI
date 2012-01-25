@@ -3,8 +3,15 @@
 
 #include <QObject>
 #include <QDebug>
+
+//need to phase these out
 #include "qextserialenumerator.h"
 #include "qextserialport.h"
+
+//and replace them with these
+#include "serialdeviceenumerator.h"
+#include "abstractserial.h"
+
 #include "errorhandler.h"
 #include <QTimer>
 #include <QProcess>
@@ -17,6 +24,7 @@ class ArduinoIO : public QObject
     Q_OBJECT
 
 private:
+    AbstractSerial *arduinoPort2;
     QProcess *avrdude;
     QextSerialPort *arduinoPort;
     QString arduinoPortName;

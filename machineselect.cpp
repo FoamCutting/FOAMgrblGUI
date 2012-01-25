@@ -31,6 +31,7 @@ MachineSelect::MachineSelect(QString pref, QWidget *parent) :
 void MachineSelect::okay()
 {
     settings->setMachineName(machineList_combo->currentText());
+    emit machineChanged();
     this->done(0);
 }
 

@@ -25,6 +25,7 @@ NewMachineDialog::NewMachineDialog(QWidget *parent) :
 void NewMachineDialog::okay()
 {
     settings->setMachineName(newMachineName_lEdit->text());
+    emit machineChanged();
     this->done(0);
 }
 

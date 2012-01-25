@@ -13,8 +13,9 @@ Settings::Settings(QWidget *parent) :
     Qt::WindowFlags flags = ((this->windowFlags()) | Qt::WindowStaysOnTopHint);
     this->setWindowFlags(flags);
     writingToArduino = false;
-    GetAllSettings();
+    GetGlobalSettings();
     settings.global.currentMachine = settings.global.defaultMachine;
+    GetMachineSettings();
     on_grblVerson_combo_currentIndexChanged(ui->grblVerson_combo->currentIndex());
 }
 
@@ -38,7 +39,7 @@ void Settings::closeEvent(QCloseEvent *event)
 
 void Settings::showEvent(QShowEvent *event)
 {
-    GetAllSettings();
+    GetMachineSettings();
     DisplayGlobalSettings();
     DisplayGeneralSettings();
     DisplayGrblSettings();
@@ -62,6 +63,7 @@ void Settings::hideEvent(QHideEvent *event)
 inline int Settings::OpenMachineFile()
 {
     qDebug() << "Open Machine File";
+    QDir::setCurrent(applicationDirectory.absolutePath());
     if(!QDir("MachineSettings").exists())
         QDir().mkdir("MachineSettings");
     QDir::setCurrent("MachineSettings");
@@ -564,7 +566,7 @@ float Settings::Get(int sett)
     }
 }
 
-int Settings::GetAllSettings()
+int Settings::GetMachineSettings()
 {
     GetGlobalSettings();
     GetGeneralSettings();

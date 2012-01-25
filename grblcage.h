@@ -19,6 +19,10 @@
 #include "newmachinedialog.h"
 #include <QScrollBar>
 #include <QDebug>
+#include <QLabel>
+#include <math.h>
+//#include "serialdeviceenumerator.h"
+
 
 namespace Ui {
     class GrblCage;
@@ -54,6 +58,7 @@ private:
     int lineCount;
     bool streamInProgress;
     void PutDeviceGrblSettings();
+    QLabel *deviceStatus;
 
 public:
     explicit GrblCage(QWidget *parent = 0);
@@ -61,6 +66,9 @@ public:
 
 private slots:
     void PutDeviceGrblSettings2();
+    void UpdateTitleBar();
+    void UpdateDeviceStatusBar();
+    void ScrollBarsMoved();
 
     void on_actionScale_G_Code_triggered();
     void on_actionOpen_GCode_File_triggered();
@@ -93,12 +101,10 @@ private slots:
     void on_actionCheck_Settings_triggered();
     void on_actionConnect_triggered();
     void on_actionDisconnect_triggered();
-
-    void on_pushButton_clicked();
-
     void on_actionLoad_Machine_triggered();
-
     void on_actionNew_Machine_triggered();
+
+    void on_pushButton_clicked();   //probably will not keep this
 
 signals:
     void GCodeDocumentAltered();

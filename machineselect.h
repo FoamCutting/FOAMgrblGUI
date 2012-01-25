@@ -26,6 +26,7 @@ private:
     QString *preferred;
 
 signals:
+    void machineChanged();
 
 public slots:
 
