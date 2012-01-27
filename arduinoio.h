@@ -4,11 +4,6 @@
 #include <QObject>
 #include <QDebug>
 
-//need to phase these out
-#include "qextserialenumerator.h"
-#include "qextserialport.h"
-
-//and replace them with these
 #include "serialdeviceenumerator.h"
 #include "abstractserial.h"
 
@@ -37,10 +32,10 @@ public:
 
     Settings::grblSettings GrblSettings;
     void SetErrorHandler(ErrorHandler*);
-    QList<QextPortInfo> ports;
+    QStringList ports;
     bool IsReady();
     explicit ArduinoIO(QObject *parent = 0);
-    QList<QextPortInfo> GetPorts();
+    QStringList GetPorts();
     bool OpenPort(int = 0);
     void ClosePort();
     bool SetBaudRate(int);

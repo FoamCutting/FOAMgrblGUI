@@ -19,14 +19,14 @@ void ArduinoIO::SetErrorHandler(ErrorHandler *handler)
     err = handler;
 }
 
-QList<QextPortInfo> ArduinoIO::GetPorts()
+QStringList ArduinoIO::GetPorts()
 {
     ports.clear();
-    ports = QextSerialEnumerator::getPorts();
+    ports = SerialDeviceEnumerator::instance()->devicesAvailable();
     //qDebug() << "ed Arduinos";
     //qDebug() << "===================================";
     for (int i = 0; i < ports.size();) {
-        if((ports.at(i).portName).contains("ttyUSB") || (ports.at(i).portName).contains("ttyACM") ) {
+	if((ports.at(i)).contains("ttyUSB") || (ports.at(i)).contains("ttyACM") ) {
 //                qDebug() << "port name:" << ports.at(i).portName;
 //                qDebug() << "friendly name:" << ports.at(i).friendName;
 //                qDebug() << "physical name:" << ports.at(i).physName;
@@ -50,6 +50,7 @@ QList<QextPortInfo> ArduinoIO::GetPorts()
     //        qDebug() << "product ID:" << QString::number(ports.at(i).productID, 16);
     //        qDebug() << "===================================";
     //    }
+    qDebug() << "Available Ports: \n" << ports;
     return ports;
 }
 
@@ -60,15 +61,16 @@ bool ArduinoIO::OpenPort(int index)
     GetPorts();
     if(ports.isEmpty())
 	return 0;
-    arduinoPortName = ports.at(index).physName;
+    arduinoPortName = ports.at(index);
     arduinoPort = new AbstractSerial();
     arduinoPort->setDeviceName(arduinoPortName);
-    arduinoPort->setFlowControl(FLOW_XONXOFF);
-    arduinoPort->setParity(PAR_NONE);
-    arduinoPort->setDataBits(DATA_8);
-    arduinoPort->setStopBits(STOP_1);
+    arduinoPort->setFlowControl(AbstractSerial::FlowControlXonXoff);
+    arduinoPort->setParity(AbstractSerial::ParityNone);
+    arduinoPort->setDataBits(AbstractSerial::DataBits8);
+    arduinoPort->setStopBits(AbstractSerial::StopBits1);
+
 //    if(settings->Get(Settings::ardBaudRate) = 9600)
-	arduinoPort->setBaudRate(BAUD9600);
+	arduinoPort->setBaudRate(AbstractSerial::BaudRate9600);
     deviceState = arduinoPort->open(QIODevice::ReadWrite);
     if(deviceState) {
 	qDebug() << "Arduino Port Opened!";
@@ -242,7 +244,7 @@ bool ArduinoIO::SetBaudRate(int baud)
     switch(baud)
     {
     case 9600:
-        arduinoPort->setBaudRate(BAUD9600);
+	arduinoPort->setBaudRate(AbstractSerial::BaudRate9600);
         return 1;
     default:
         return 0;
@@ -271,9 +273,11 @@ void ArduinoIO::Flush()
 void ArduinoIO::onReadyRead()
 {
 //    emit deviceStateChanged(BUSY);
+    if(!arduinoPort->canReadLine())
+	return;
     QString data = arduinoPort->readLine().trimmed();
     qDebug() << ">>" << data;
-    if(data == "") {
+    if(data == "") {	    //this isn't quite right: will disconnect after 100, regardless of time interval
 	static int count = 0;
 	count++;
 	if(count == 100) {
