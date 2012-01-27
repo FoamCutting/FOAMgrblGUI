@@ -79,9 +79,9 @@ bool ArduinoIO::OpenPort(int index)
 //	QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings()));
 	connect(arduinoPort, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
 	QObject::connect(arduinoPort, SIGNAL(dsrChanged(bool)), this, SLOT(onDSRChanged(bool)));
+	QTimer::singleShot(1000, this, SLOT(GetDeviceGrblSettings()));
     }
-    QTimer::singleShot(1000, this, SLOT(GetDeviceGrblSettings()));
-    qDebug() << "Port Opened";
+    qDebug() << "OpenPort finished";
     return deviceState;
 }
 
