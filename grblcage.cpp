@@ -5,6 +5,15 @@ GrblCage::GrblCage(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::GrblCage)
 {
+#ifdef Q_OS_LINUX
+    qDebug() << "the current OS is Linux";
+#endif
+#ifdef Q_OS_WIN
+    qDebug() << "the current OS is Windows";
+#endif
+#ifdef Q_OS_MAC
+    qDebug() << "the current OS is Mac";
+#endif
     ui->setupUi(this);
     plotter = new GCodePlot(this);
     editor = new GCodeText;

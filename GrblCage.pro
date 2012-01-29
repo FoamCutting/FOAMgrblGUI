@@ -4,6 +4,8 @@
 #
 #-------------------------------------------------
 
+message($$_PRO_FILE_PWD_)
+
 QT       += core gui
 
 TARGET = GrblCage
@@ -48,11 +50,19 @@ OTHER_FILES +=
 
 RESOURCES +=
 
+LIBS += -L/home/christian/personal/Projects/CNC/GrblCageProject/qserialdevice/src/build/release/ -lqserialdevice
+#LIBS +=	-L $$PWD/../qserialdevice/src-build-desktop/build/debug/ -lqserialdevice
 
 
-LIBS += -lqextserialport -lqserialdevice
-unix:DEFINES = _TTY_POSIX_
-win32:DEFINES = _TTY_WIN_ QWT_DLL QT_DLL
+INCLUDEPATH += $$PWD/../qserialdevice/src/qserialdevice
+INCLUDEPATH += $$PWD/../qserialdevice/src/qserialdeviceenumerator
 
-INCLUDEPATH += ../qserialdevice/src/qserialdevice\
-    ../qserialdevice/src/qserialdeviceenumerator
+DEPENDPATH += $$PWD/../qserialdevice/src/qserialdevice
+DEPENDPATH +=  $$PWD/../qserialdevice/src/qserialdeviceenumerator
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../qserialdevice/src/build/release -lqserialdevice
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../qserialdevice/src/build/debug -lqserialdevice
+else:unix: LIBS += -L$$PWD/../qserialdevice/src/build/release/ -lqserialdevice
+
+INCLUDEPATH += $$PWD/../qserialdevice/src/qserialdevice
+DEPENDPATH += $$PWD/../qserialdevice/src/qserialdevice

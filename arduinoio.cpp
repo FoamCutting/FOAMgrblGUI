@@ -23,33 +23,25 @@ QStringList ArduinoIO::GetPorts()
 {
     ports.clear();
     ports = SerialDeviceEnumerator::instance()->devicesAvailable();
-    //qDebug() << "ed Arduinos";
-    //qDebug() << "===================================";
+
+#ifdef Q_OS_LINUX
     for (int i = 0; i < ports.size();) {
 	if((ports.at(i)).contains("ttyUSB") || (ports.at(i)).contains("ttyACM") ) {
-//                qDebug() << "port name:" << ports.at(i).portName;
-//                qDebug() << "friendly name:" << ports.at(i).friendName;
-//                qDebug() << "physical name:" << ports.at(i).physName;
-//                qDebug() << "enumerator name:" << ports.at(i).enumName;
-//                qDebug() << "vendor ID:" << QString::number(ports.at(i).vendorID, 16);
-//                qDebug() << "product ID:" << QString::number(ports.at(i).productID, 16);
-//                qDebug() << "===================================";
             i++;
         }
         else {
             ports.removeAt(i);
         }
     }
-    //    qDebug() << "List of ports:";
-    //    for (int i = 0; i < ports.size(); i++) {
-    //        qDebug() << "port name:" << ports.at(i).portName;
-    //        qDebug() << "friendly name:" << ports.at(i).friendName;
-    //        qDebug() << "physical name:" << ports.at(i).physName;
-    //        qDebug() << "enumerator name:" << ports.at(i).enumName;
-    //        qDebug() << "vendor ID:" << QString::number(ports.at(i).vendorID, 16);
-    //        qDebug() << "product ID:" << QString::number(ports.at(i).productID, 16);
-    //        qDebug() << "===================================";
-    //    }
+#endif
+
+#ifdef Q_OS_WIN
+    //have a list of previously verified COM ports
+#endif
+
+#ifdef Q_OS_MAC
+    //find out how Macs handle USB port naming
+#endif
     qDebug() << "Available Ports: \n" << ports;
     return ports;
 }
