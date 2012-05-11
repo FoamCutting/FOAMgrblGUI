@@ -33,13 +33,16 @@ QGraphicsScene* GCodePlot::scene()
 void GCodePlot::drawGrid()
 {
     GCodeScene->clear();
+    qDebug() << "The scen rect is:" << GCodeScene->sceneRect();
+
+    GCodeScene->clearSelection();
     float gridSizeX, gridSizeY;
     int gridIncrement;
     if(settings->Get(Settings::plotGridUnits) == INCHES)
         gridIncrement = UNITS_PER_INCH;
     else
         gridIncrement = UNITS_PER_MM * 10;
-    if(settings->Get(Settings::plotGridUnits) == INCHES) {
+    if(settings->Get(Settings::machSizeUnits) == INCHES) {
 	gridSizeX = settings->Get(Settings::machSizeX);
 	gridSizeY = settings->Get(Settings::machSizeY);
 	gridSizeX *= UNITS_PER_INCH;
@@ -58,6 +61,8 @@ void GCodePlot::drawGrid()
         GCodeScene->addLine(i, 0, i, gridSizeY*(-1), drawPen);
     GCodeScene->addLine(0, gridSizeY*(-1), gridSizeX, gridSizeY*(-1), drawPen);
     GCodeScene->addLine(gridSizeX, 0, gridSizeX, gridSizeY*(-1), drawPen);
+    GCodeScene->setSceneRect(0,-1*gridSizeY, gridSizeX, gridSizeY);
+    qDebug() << "The scen rect is:" << GCodeScene->sceneRect();
 }
 
 void GCodePlot::processGCodes(QString gcodeString)

@@ -5,15 +5,6 @@ GrblCage::GrblCage(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::GrblCage)
 {
-#ifdef Q_OS_LINUX
-    qDebug() << "the current OS is Linux";
-#endif
-#ifdef Q_OS_WIN
-    qDebug() << "the current OS is Windows";
-#endif
-#ifdef Q_OS_MAC
-    qDebug() << "the current OS is Mac";
-#endif
     ui->setupUi(this);
     plotter = new GCodePlot(this);
     editor = new GCodeText;
@@ -125,6 +116,7 @@ void GrblCage::DisableMainWindow()
 void GrblCage::refreshPlot()
 {
     plotter->processGCodes(GCodeDocument->toPlainText());
+    ui->gcodePlotter->fitInView(plotter->scene()->sceneRect(), Qt::KeepAspectRatioByExpanding);
 }
 
 /** ******************** (Pan/Zoom Functions) ******************** **/
@@ -332,9 +324,10 @@ int GrblCage::openGCode(QString fileName)
     plotter->processGCodes(GCodeDocument->toPlainText());
     emit GCodeDocumentAltered();
     ui->gcodePlotter->setScene(plotter->scene());
-    ui->gcodePlotter->fitInView(plotter->scene()->sceneRect(), Qt::KeepAspectRatioByExpanding);
     ui->gcodeEditor->setDocument(editor->document());
     SetCenter(QPointF((ui->gcodePlotter->sceneRect().width())/2, -(ui->gcodePlotter->sceneRect().height())/2));
+    qDebug() << "The scene Rect is now: " << ui->gcodePlotter->sceneRect();
+    ui->gcodePlotter->fitInView(plotter->scene()->sceneRect(), Qt::KeepAspectRatioByExpanding);
     return 1;
 }
 
@@ -652,6 +645,10 @@ void GrblCage::on_actionLoad_Machine_triggered()
     MachineSelect *select;
     select = new MachineSelect(settings->GetStr(Settings::globCurrentMach), this);
     connect(select, SIGNAL(machineChanged()), this, SLOT(UpdateTitleBar()));
+    disconnect(select, SIGNAL(machineChanged()), settings, SLOT(refresh()));
+    connect(select, SIGNAL(machineChanged()), settings, SLOT(refresh()));
+    disconnect(select, SIGNAL(machineChanged()), this, SLOT(refreshPlot()));
+    connect(select, SIGNAL(machineChanged()), this, SLOT(refreshPlot()));
     select->SetSettings(settings);
     select->exec();
 }
@@ -660,6 +657,10 @@ void GrblCage::on_actionNew_Machine_triggered()
 {
     NewMachineDialog *dialog = new NewMachineDialog(this);
     connect(dialog, SIGNAL(machineChanged()), this, SLOT(UpdateTitleBar()));
+    disconnect(dialog, SIGNAL(machineChanged()), settings, SLOT(refresh()));
+    connect(dialog, SIGNAL(machineChanged()), settings, SLOT(refresh()));
+    disconnect(dialog, SIGNAL(machineChanged()), this, SLOT(refreshPlot()));
+    connect(dialog, SIGNAL(machineChanged()), this, SLOT(refreshPlot()));
     dialog->SetSettings(settings);
     dialog->exec();
 }

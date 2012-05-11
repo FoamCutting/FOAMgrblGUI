@@ -128,6 +128,8 @@ void Settings::DisplayGlobalSettings()
 
 void Settings::SaveGlobalSettings()
 {
+    settings.global.defaultMachine = ui->defaultMachName_label->text();
+    PutGlobalSettings();
 }
 
 /** ******************** Grbl Setttings ******************** **/
@@ -711,4 +713,16 @@ bool Settings::grblSettings::operator== (grblSettings other)
 void Settings::on_setMachDefault_pButton_clicked()
 {
     settings.global.defaultMachine = settings.global.currentMachine;
+    ui->defaultMachName_label->setText(settings.global.defaultMachine);
+}
+
+void Settings::refresh()
+{
+    GetGlobalSettings();
+    GetMachineSettings();
+}
+
+void Settings::on_pushButton_clicked()
+{
+    SaveGlobalSettings();
 }

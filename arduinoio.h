@@ -74,8 +74,8 @@ signals:
 public slots:
 
 private slots:
+    void SerialException();
     void onReadyRead();
-    void onDSRChanged(bool x);
     void SetDeviceState(int);
     void GetDeviceGrblSettings();
     void GetDeviceGrblSettings2();

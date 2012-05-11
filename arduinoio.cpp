@@ -3,6 +3,7 @@
 ArduinoIO::ArduinoIO(QObject *parent) :
     QObject(parent)
 {
+    arduinoPort = new AbstractSerial();
     deviceState = DISCONNECTED;
     GrblSettings.version = -1;
     connect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(SetDeviceState(int)));
@@ -54,24 +55,29 @@ bool ArduinoIO::OpenPort(int index)
     if(ports.isEmpty())
 	return 0;
     arduinoPortName = ports.at(index);
-    arduinoPort = new AbstractSerial();
     arduinoPort->setDeviceName(arduinoPortName);
-    arduinoPort->setFlowControl(AbstractSerial::FlowControlXonXoff);
+    arduinoPort->setFlowControl(AbstractSerial::FlowControlOff);
     arduinoPort->setParity(AbstractSerial::ParityNone);
     arduinoPort->setDataBits(AbstractSerial::DataBits8);
     arduinoPort->setStopBits(AbstractSerial::StopBits1);
+    arduinoPort->setBaudRate(AbstractSerial::BaudRate9600);
 
-//    if(settings->Get(Settings::ardBaudRate) = 9600)
-	arduinoPort->setBaudRate(AbstractSerial::BaudRate9600);
+    disconnect(arduinoPort, SIGNAL(exception()), this, SLOT(SerialException()));
+    connect(arduinoPort, SIGNAL(exception()), this, SLOT(SerialException()));
+    arduinoPort->flush();
+    arduinoPort->reset();
     deviceState = arduinoPort->open(QIODevice::ReadWrite);
     if(deviceState) {
+	arduinoPort->setDtr(true);
+	arduinoPort->setRts(true);
+//	arduinoPort->setDtr(false);
+//	arduinoPort->setRts(false);
 	qDebug() << "Arduino Port Opened!";
 	emit deviceStateChanged(CONNECTED);
        // flush();
 //	QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings()));
 	connect(arduinoPort, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
-	QObject::connect(arduinoPort, SIGNAL(dsrChanged(bool)), this, SLOT(onDSRChanged(bool)));
-	QTimer::singleShot(1000, this, SLOT(GetDeviceGrblSettings()));
+	QTimer::singleShot(2000, this, SLOT(GetDeviceGrblSettings()));
     }
     qDebug() << "OpenPort finished";
     return deviceState;
@@ -80,7 +86,6 @@ bool ArduinoIO::OpenPort(int index)
 void ArduinoIO::ClosePort()
 {
     disconnect(arduinoPort, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
-    disconnect(arduinoPort, SIGNAL(dsrChanged(bool)), this, SLOT(onDSRChanged(bool)));
     Flush();
     ClearGrblSettings();
     arduinoPort->close();
@@ -101,7 +106,8 @@ void ArduinoIO::GetDeviceGrblSettings()
 	emit deviceStateChanged(BUSY);
 	Flush();
 //        this << QString("\r\n\r\n");     //this was causing issues in 0.7d; is it really necessary?
-	this << QString("$\n");
+//	this << QString("$\n");
+	arduinoPort->write(QByteArray("$\n"));
 	disconnect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(GetDeviceGrblSettings()));
 	connect(this, SIGNAL(ok()), this, SLOT(GetDeviceGrblSettings2()));
 	return;
@@ -264,13 +270,15 @@ void ArduinoIO::Flush()
 
 void ArduinoIO::onReadyRead()
 {
+    static int count = 0;
 //    emit deviceStateChanged(BUSY);
-    if(!arduinoPort->canReadLine())
+    if(!arduinoPort->canReadLine())  {
+//	qDebug() << "PEEK: " << arduinoPort->peek(64);
 	return;
+    }
     QString data = arduinoPort->readLine().trimmed();
     qDebug() << ">>" << data;
     if(data == "") {	    //this isn't quite right: will disconnect after 100, regardless of time interval
-	static int count = 0;
 	count++;
 	if(count == 100) {
 	    qDebug() << "Arduino Disconnected: Closing Port";
@@ -280,6 +288,7 @@ void ArduinoIO::onReadyRead()
     }
     else if(data == "Stored new setting") {
 	emit settingChangeSucceeded();
+	count = 0;
 	return;
     }
     else if(data == "ok")
@@ -301,23 +310,18 @@ void ArduinoIO::onReadyRead()
 	    GrblSettings.version = 1;
         else if(version == "0.51")
 	    GrblSettings.version = 0;
+    	count = 0;
         return;
     }
     else if(data == "'$' to dump current settings") {
 	emit deviceStateChanged(CHECKING);
 	GetDeviceGrblSettings();
+	count = 0;
 	return;
     }
+    count = 0;
     dataBuffer << data;
     emit newData();
-}
-
-void ArduinoIO::onDSRChanged(bool x)
-{
-    if(!x)
-	qDebug() << "Arduino disconnected! -- dsr";
-    else
-	qDebug() << "?????? -- dsr";
 }
 
 void ArduinoIO::SeekRelative(double dX, double dY, double dZ)
@@ -377,4 +381,9 @@ bool ArduinoIO::IsReady()
 void ArduinoIO::RefreshSettings()
 {
     GetDeviceGrblSettings();
+}
+
+void ArduinoIO::SerialException()
+{
+    qDebug() << "SERIAL ERROR!!";
 }

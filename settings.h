@@ -208,6 +208,7 @@ protected:
     void closeEvent(QCloseEvent*);
 
 public slots:
+    void refresh();
 
 private slots:
     void on_grblSave_pButton_clicked();
@@ -220,6 +221,8 @@ private slots:
     void on_preProcSave_pButton_clicked();
 
     void on_setMachDefault_pButton_clicked();
+
+    void on_pushButton_clicked();
 
 signals:
     void settingsHidden();
