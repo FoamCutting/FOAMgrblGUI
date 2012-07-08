@@ -10,6 +10,7 @@ QT       += core gui
 TARGET = FoamGrbl
 TEMPLATE = app
 
+DESTDIR = $$PWD/../FoamGrbl-build-desktop
 MOC_DIR = $$PWD/../FoamGrbl-build-desktop/tmp
 OBJECTS_DIR = $$PWD/../FoamGrbl-build-desktop/tmp
 UI_DIR = $$PWD/../FoamGrbl-build-desktop/tmp

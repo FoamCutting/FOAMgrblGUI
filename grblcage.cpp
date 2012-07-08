@@ -47,6 +47,7 @@ GrblCage::GrblCage(QWidget *parent) :
     UpdateTitleBar();
     statusBar()->addPermanentWidget(deviceStatus);
     statusBar()->showMessage("GrblCage initiated");
+    UpdateDeviceStatusBar();
 }
 
 GrblCage::~GrblCage()
@@ -674,9 +675,9 @@ void GrblCage::UpdateTitleBar()
 void GrblCage::UpdateDeviceStatusBar()
 {
     if(arduino->DeviceState() > ArduinoIO::DISCONNECTED)
-	deviceStatus->setText(arduino->portName().prepend("Connected to "));
+        deviceStatus->setText(arduino->portName().prepend("Connected to "));
     else
-	deviceStatus->setText(QString("disconnected"));
+        deviceStatus->setText(QString("disconnected"));
     switch(arduino->DeviceState())
     {
     case ArduinoIO::DISCONNECTED:
