@@ -3,7 +3,8 @@
 ArduinoIO::ArduinoIO(QObject *parent) :
     QObject(parent)
 {
-    arduinoPort = new AbstractSerial();
+//    arduinoPort = new AbstractSerial();
+    arduinoPort = new SerialPort();
     deviceState = DISCONNECTED;
     GrblSettings.version = -1;
     connect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(SetDeviceState(int)));
@@ -23,28 +24,40 @@ void ArduinoIO::SetErrorHandler(ErrorHandler *handler)
 QStringList ArduinoIO::GetPorts()
 {
     ports.clear();
-    ports = SerialDeviceEnumerator::instance()->devicesAvailable();
+    SerialPortInfo::availablePorts();
 
-#ifdef Q_OS_LINUX
-    for (int i = 0; i < ports.size();) {
-	if((ports.at(i)).contains("ttyUSB") || (ports.at(i)).contains("ttyACM") ) {
-            i++;
-        }
-        else {
-            ports.removeAt(i);
-        }
+    foreach (const SerialPortInfo &info, SerialPortInfo::availablePorts()) {
+        QString s(QObject::tr("Port: %1\n"
+                              "Location: %2\n"
+                              "Description: %3\n"
+                              "Manufacturer: %4\n"
+                              "Vendor Identifier: %5\n"
+                              "Product Identifier: %6\n"
+                              "Busy: %7\n"));
+
+        s = s.arg(info.portName()).arg(info.systemLocation())
+                .arg(info.description()).arg(info.manufacturer())
+                .arg(info.vendorIdentifier()).arg(info.productIdentifier())
+                .arg(info.isBusy() ? QObject::tr("Yes") : QObject::tr("No"));
+        qDebug() << s;
+
+        #ifdef Q_OS_LINUX
+            if(info.portName().contains("ttyUSB") || info.portName().contains("ttyACM") ) {
+                ports.append(info.systemLocation());
+                }
+        #endif
+
+        #ifdef Q_OS_WIN
+            //have a list of previously verified COM ports
+        #endif
+
+        #ifdef Q_OS_MAC
+            //find out how Macs handle USB port naming
+        #endif
+            qDebug() << "Available Ports: \n" << ports;
+            return ports;
     }
-#endif
-
-#ifdef Q_OS_WIN
-    //have a list of previously verified COM ports
-#endif
-
-#ifdef Q_OS_MAC
-    //find out how Macs handle USB port naming
-#endif
-    qDebug() << "Available Ports: \n" << ports;
-    return ports;
+    qDebug() << ports;
 }
 
 bool ArduinoIO::OpenPort(int index)
@@ -55,12 +68,13 @@ bool ArduinoIO::OpenPort(int index)
     if(ports.isEmpty())
 	return 0;
     arduinoPortName = ports.at(index);
-    arduinoPort->setDeviceName(arduinoPortName);
-    arduinoPort->setFlowControl(AbstractSerial::FlowControlOff);
-    arduinoPort->setParity(AbstractSerial::ParityNone);
-    arduinoPort->setDataBits(AbstractSerial::DataBits8);
-    arduinoPort->setStopBits(AbstractSerial::StopBits1);
-    arduinoPort->setBaudRate(AbstractSerial::BaudRate9600);
+    //arduinoPort->setDeviceName(arduinoPortName);
+    arduinoPort->setPort(arduinoPortName);
+    arduinoPort->setFlowControl(SerialPort::NoFlowControl);
+    arduinoPort->setParity(SerialPort::NoParity);
+    arduinoPort->setDataBits(SerialPort::Data8);
+    arduinoPort->setStopBits(SerialPort::OneStop);
+    arduinoPort->setRate(SerialPort::Rate9600);
 
     disconnect(arduinoPort, SIGNAL(exception()), this, SLOT(SerialException()));
     connect(arduinoPort, SIGNAL(exception()), this, SLOT(SerialException()));
@@ -242,7 +256,7 @@ bool ArduinoIO::SetBaudRate(int baud)
     switch(baud)
     {
     case 9600:
-	arduinoPort->setBaudRate(AbstractSerial::BaudRate9600);
+    arduinoPort->setRate(SerialPort::Rate9600);
         return 1;
     default:
         return 0;

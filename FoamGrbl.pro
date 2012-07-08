@@ -6,14 +6,22 @@
 
 
 QT       += core gui
+CONFIG += serialport
 
 TARGET = FoamGrbl
 TEMPLATE = app
 
-DESTDIR = $$PWD/../FoamGrbl-build-desktop
-MOC_DIR = $$PWD/../FoamGrbl-build-desktop/tmp
-OBJECTS_DIR = $$PWD/../FoamGrbl-build-desktop/tmp
-UI_DIR = $$PWD/../FoamGrbl-build-desktop/tmp
+CONFIG(debug, debug|release) {
+    DESTDIR = $$PWD/../FoamGrbl-Debug
+    MOC_DIR = $$PWD/../FoamGrbl-Debug/tmp
+    OBJECTS_DIR = $$PWD/../FoamGrbl-Debug/tmp
+    UI_DIR = $$PWD/../FoamGrbl-Debug/tmp
+} else {
+    DESTDIR = $$PWD/../FoamGrbl-Release
+    MOC_DIR = $$PWD/../FoamGrbl-Release/tmp
+    OBJECTS_DIR = $$PWD/../FoamGrbl-Release/tmp
+    UI_DIR = $$PWD/../FoamGrbl-Release/tmp
+}
 
 SOURCES += main.cpp\
     gcodeplot.cpp \
