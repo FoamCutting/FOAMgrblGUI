@@ -62,12 +62,5 @@ OTHER_FILES +=
 
 RESOURCES +=
 
-INCLUDEPATH += $$PWD/../qserialdevice/src/qserialdevice
-INCLUDEPATH += $$PWD/../qserialdevice/src/qserialdeviceenumerator
 
-DEPENDPATH += $$PWD/../qserialdevice/src/qserialdevice
-DEPENDPATH +=  $$PWD/../qserialdevice/src/qserialdeviceenumerator
-
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../qserialdevice/src/build/release -lqserialdevice
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../qserialdevice/src/build/debug -lqserialdevice
-else:unix: LIBS += -L$$PWD/../qserialdevice/src/build/release/ -lqserialdevice
+QMAKE_POST_LINK = ../FoamGrbl-Release/FoamGrbl
