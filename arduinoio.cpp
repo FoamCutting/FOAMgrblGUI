@@ -76,8 +76,6 @@ bool ArduinoIO::OpenPort(int index)
     arduinoPort->setStopBits(SerialPort::OneStop);
     arduinoPort->setRate(SerialPort::Rate9600);
 
-    disconnect(arduinoPort, SIGNAL(exception()), this, SLOT(SerialException()));
-    connect(arduinoPort, SIGNAL(exception()), this, SLOT(SerialException()));
     arduinoPort->flush();
     arduinoPort->reset();
     deviceState = arduinoPort->open(QIODevice::ReadWrite);
@@ -117,22 +115,25 @@ void ArduinoIO::GetDeviceGrblSettings()
 //	return;
 //    }
     if(DeviceState() == READY || DeviceState() == CHECKING || DeviceState() == CONNECTED) {
-	emit deviceStateChanged(BUSY);
-	Flush();
-//        this << QString("\r\n\r\n");     //this was causing issues in 0.7d; is it really necessary?
-//	this << QString("$\n");
-	arduinoPort->write(QByteArray("$\n"));
-	disconnect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(GetDeviceGrblSettings()));
-	connect(this, SIGNAL(ok()), this, SLOT(GetDeviceGrblSettings2()));
-	return;
+        emit deviceStateChanged(BUSY);
+        Flush();
+    //        this << QString("\r\n\r\n");     //this was causing issues in 0.7d; is it really necessary?
+    //	this << QString("$\n");
+        arduinoPort->write(QByteArray("$\n"));
+        disconnect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(GetDeviceGrblSettings()));
+        connect(this, SIGNAL(ok()), this, SLOT(GetDeviceGrblSettings2()));
+        qDebug() << "GDGS1 connects ok()->GDGS2";
+        return;
      }
      else if(DeviceState() > ArduinoIO::DISCONNECTED) {
-	 connect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(GetDeviceGrblSettings()));
-	 return;
+         connect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(GetDeviceGrblSettings()));
+         qDebug() << "GDGS1 waiting for ready state";
+         return;
      }
      else {
-	 err->pushError(ErrorHandler::NoArduinoConnected);
-	 return;
+         err->pushError(ErrorHandler::NoArduinoConnected);
+         qDebug() << "GDGS1: no arduino connected";
+         return;
      }
 }
 
@@ -327,12 +328,14 @@ void ArduinoIO::onReadyRead()
     	count = 0;
         return;
     }
-    else if(data == "'$' to dump current settings") {
-	emit deviceStateChanged(CHECKING);
-	GetDeviceGrblSettings();
-	count = 0;
-	return;
-    }
+
+/// originally used to kick off GDGS, replaced with timer in OpenPort(), needs further testing to determine if sufficient
+//  else if(data == "'$' to dump current settings") {
+//	emit deviceStateChanged(CHECKING);
+//	GetDeviceGrblSettings();
+//	count = 0;
+//	return;
+//    }
     count = 0;
     dataBuffer << data;
     emit newData();
