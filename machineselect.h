@@ -19,11 +19,11 @@ public:
     QPushButton *cancel_pButton;
     QComboBox *machineList_combo;
     void SetSettings(Settings*);
-    void SetPreference(QString);
+//    void SetPreference(QString);
 
 private:
     Settings *settings;
-    QString *preferred;
+//    QString *preferred;
 
 signals:
     void machineChanged();

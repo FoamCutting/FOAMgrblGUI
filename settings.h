@@ -28,6 +28,8 @@
 #define DEFAULT_MAX_CORNERING_SPEED 50.0
 #define DEFAULT_STEP_PORT_INVERT_MASK 0
 
+#define ENTRY_SIZE 100
+
 
 namespace Ui {
     class Settings;

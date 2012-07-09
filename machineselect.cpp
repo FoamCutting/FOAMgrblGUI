@@ -47,7 +47,7 @@ void MachineSelect::SetSettings(Settings *s)
     settings = s;
 }
 
-void MachineSelect::SetPreference(QString pref)
-{
-    preferred = &pref;
-}
+//void MachineSelect::SetPreference(QString pref)
+//{
+//    preferred = &pref;
+//}

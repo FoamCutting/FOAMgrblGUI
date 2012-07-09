@@ -582,34 +582,34 @@ QString Settings::GetSettingStr(int index)
     QString buffer;
     int pos = 0;
     if(index < SEPARATOR)  {
-	machineFile->seek(index*50);
-	buffer = machineFile->readLine(50);
-	while(buffer[pos] != '=')
-	{
-	    pos++;
-	    if(pos > 50)
-		return QString("Error");
-	}
-	pos++;
-	while(buffer[pos] == ' ')
-	    pos++;
-	buffer.remove(0, (pos-1));
-	return buffer.trimmed();
+        machineFile->seek(index*ENTRY_SIZE);
+        buffer = machineFile->readLine(ENTRY_SIZE);
+        while(buffer[pos] != '=')
+        {
+            pos++;
+            if(pos > ENTRY_SIZE)
+            return QString("Error");
+        }
+        pos++;
+        while(buffer[pos] == ' ')
+            pos++;
+        buffer.remove(0, (pos-1));
+        return buffer.trimmed();
     }
     else  {
-	globalFile->seek((index-(SEPARATOR+1))*50);
-	buffer = globalFile->readLine(50);
-	while(buffer[pos] != '=')
-	{
-	    pos++;
-	    if(pos > 50)
-		return QString("Error");
-	}
-	pos++;
-	while(buffer[pos] == ' ')
-	    pos++;
-	buffer.remove(0, (pos-1));
-	return buffer.trimmed();
+        globalFile->seek((index-(SEPARATOR+1))*ENTRY_SIZE);
+        buffer = globalFile->readLine(ENTRY_SIZE);
+        while(buffer[pos] != '=')
+        {
+            pos++;
+            if(pos > ENTRY_SIZE)
+            return QString("Error");
+        }
+        pos++;
+        while(buffer[pos] == ' ')
+            pos++;
+        buffer.remove(0, (pos-1));
+        return buffer.trimmed();
     }
 }
 
@@ -619,13 +619,13 @@ T Settings::GetSetting(int index)
     QString buffer;
     T value;
     int pos = 0;
-    machineFile->seek(index*50);
-    buffer = machineFile->readLine(50);
+    machineFile->seek(index*ENTRY_SIZE);
+    buffer = machineFile->readLine(ENTRY_SIZE);
     while(buffer[pos] != '=')
     {
-	pos++;
-	if(pos > 50)
-	    return T(1);
+        pos++;
+        if(pos > ENTRY_SIZE)
+            return T(1);
     }
     pos++;
     while(buffer[pos] == ' ')
@@ -641,17 +641,17 @@ void Settings::PutSettingStr(QString description, int index, QString setting)
     char s[] = {' ', '\0'};
     description += " = ";
     if(index < SEPARATOR)  {
-	machineFile->seek(index*50);
+    machineFile->seek(index*ENTRY_SIZE);
 	machineFile->write(QByteArray(description.toAscii()) + setting.toAscii());
-	while(machineFile->pos() < index*50 + 49)
+    while(machineFile->pos() < index*ENTRY_SIZE + (ENTRY_SIZE-1))
 	    machineFile->write(s);
 	machineFile->write(QByteArray("\n"));
     }
     else  {
-	globalFile->seek((index-(SEPARATOR+1))*50);
+    globalFile->seek((index-(SEPARATOR+1))*ENTRY_SIZE);
 	globalFile->write(QByteArray(description.toAscii()) + setting.toAscii());
 
-	while(globalFile->pos() < (index-(SEPARATOR+1))*50 + 49)
+    while(globalFile->pos() < (index-(SEPARATOR+1))*ENTRY_SIZE + (ENTRY_SIZE-1))
 	    globalFile->write(s);
 	globalFile->write(QByteArray("\n"));
     }
@@ -667,9 +667,9 @@ void Settings::PutSetting(QString description, int index, S setting, bool conver
     else
 	settingString = setting;
     description += " = ";
-    machineFile->seek(index*50);
+    machineFile->seek(index*ENTRY_SIZE);
     machineFile->write(QByteArray(description.toAscii()) + settingString.toAscii());
-    while(machineFile->pos() < index*50 + 49)
+    while(machineFile->pos() < index*ENTRY_SIZE + (ENTRY_SIZE-1))
 	machineFile->write(s);
     machineFile->write(QByteArray("\n"));
 }
