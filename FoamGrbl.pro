@@ -63,4 +63,4 @@ OTHER_FILES +=
 RESOURCES +=
 
 
-QMAKE_POST_LINK = ../FoamGrbl-Release/FoamGrbl
+#QMAKE_POST_LINK = ../FoamGrbl-Release/FoamGrbl

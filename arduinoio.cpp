@@ -54,9 +54,9 @@ QStringList ArduinoIO::GetPorts()
         #ifdef Q_OS_MAC
             //find out how Macs handle USB port naming
         #endif
-            qDebug() << "Available Ports: \n" << ports;
-            return ports;
+            qDebug() << "Available Ports: \n" << ports;       
     }
+    return ports;
     qDebug() << ports;
 }
 
