@@ -11,7 +11,6 @@ Settings::Settings(QWidget *parent) :
 	applicationDirectory = QDir(QCoreApplication::applicationDirPath());
 	Qt::WindowFlags flags = ((this->windowFlags()) | Qt::WindowStaysOnTopHint);
 	this->setWindowFlags(flags);
-	writingToArduino = false;
 	on_grblVerson_combo_currentIndexChanged(ui->grblVerson_combo->currentIndex());
 	Init();
 }
@@ -167,40 +166,6 @@ void Settings::SaveGlobalSettings()
 	PutGlobalSettings("GlobalSettings");
 }
 
-/** ******************** Grbl Settings ******************** **/
-
-void Settings::on_grblVerson_combo_currentIndexChanged(int index)	//disable settings that are not applicable to the current grbl version
-{
-	if(index == 0) {
-	ui->acceleration_dspinbox->setEnabled(false);
-	ui->acceleration_label->setEnabled(false);
-	ui->maxJerk_dspinbox->setEnabled(false);
-	ui->maxJerk_label->setEnabled(false);
-	ui->maxJerk_label->setText("Max Jerk (delta mm/min)");
-	}
-	else if(index == 1) {
-	ui->acceleration_dspinbox->setEnabled(true);
-	ui->acceleration_label->setEnabled(true);
-	ui->maxJerk_dspinbox->setEnabled(true);
-	ui->maxJerk_label->setEnabled(true);
-	ui->maxJerk_label->setText("Max Jerk (delta mm/min)");
-	}
-	else if(index == 2) {
-	ui->acceleration_dspinbox->setEnabled(true);
-	ui->acceleration_label->setEnabled(true);
-	ui->maxJerk_dspinbox->setEnabled(true);
-	ui->maxJerk_label->setEnabled(true);
-	ui->maxJerk_label->setText("Cornering Junction Deviance (mm)");
-	}
-	else if(index == 3) {
-	ui->acceleration_dspinbox->setEnabled(true);
-	ui->acceleration_label->setEnabled(true);
-	ui->maxJerk_dspinbox->setEnabled(true);
-	ui->maxJerk_label->setEnabled(true);
-	ui->maxJerk_label->setText("Cornering Junction Deviance (mm)");
-	}
-}
-
 /** ******************** Machine Specific Settings ******************** **/
 
 int Settings::ReadMachineFile(QString fileName)
@@ -211,7 +176,8 @@ int Settings::ReadMachineFile(QString fileName)
 	if(!machineFile->open(QIODevice::ReadWrite | QIODevice::Text)) {
 		qDebug() << "Failed to open Machine Settings File " << machineFile->fileName();
 		QDir::setCurrent(applicationDirectory.absolutePath());
-		return -1; }
+		return -1;
+	}
 
 	while(!machineFile->atEnd()) {
 		QStringList list = QString(machineFile->readLine()).split("=",QString::SkipEmptyParts);
@@ -263,7 +229,8 @@ int Settings::PutMachineSettings(QString fileName)
 	if(!machineFile->open(QIODevice::ReadWrite | QIODevice::Text)) {
 		qDebug() << "Failed to open Machine Settings File " << machineFile->fileName();
 		QDir::setCurrent(applicationDirectory.absolutePath());
-		return -1; }
+		return -1;
+	}
 
 	PutSetting(M_UNITS, machineFile, settings.machine.units);
 	PutSetting(M_SIZEX, machineFile, settings.machine.sizeX);
@@ -371,6 +338,9 @@ void Settings::SaveMachineSettings()
 	emit plotSettingsChanged();
 }
 
+
+/** ******************** Display Function- ******************** **/
+
 QColor Settings::SetColorSample(QToolButton *button, QColor currentColor, bool dialog)
 {
 	QColor color;
@@ -378,12 +348,43 @@ QColor Settings::SetColorSample(QToolButton *button, QColor currentColor, bool d
 		color = QColorDialog::getColor(currentColor, this, "Select Color", QColorDialog::DontUseNativeDialog);
 	else
 		color = currentColor;
-	if(color.isValid())
-	{
+	if(color.isValid()) {
 		const QString COLOR_STYLE("QToolButton { background-color : %1; border-style: outset; border-width: 1px; border-radius: 7px; border-color: grey; }");
-	button->setStyleSheet(COLOR_STYLE.arg(color.name()));
+		button->setStyleSheet(COLOR_STYLE.arg(color.name()));
 	}
 	return color;
+}
+
+void Settings::on_grblVerson_combo_currentIndexChanged(int index)	//disable settings that are not applicable to the current grbl version
+{
+	if(index == 0) {
+	ui->acceleration_dspinbox->setEnabled(false);
+	ui->acceleration_label->setEnabled(false);
+	ui->maxJerk_dspinbox->setEnabled(false);
+	ui->maxJerk_label->setEnabled(false);
+	ui->maxJerk_label->setText("Max Jerk (delta mm/min)");
+	}
+	else if(index == 1) {
+	ui->acceleration_dspinbox->setEnabled(true);
+	ui->acceleration_label->setEnabled(true);
+	ui->maxJerk_dspinbox->setEnabled(true);
+	ui->maxJerk_label->setEnabled(true);
+	ui->maxJerk_label->setText("Max Jerk (delta mm/min)");
+	}
+	else if(index == 2) {
+	ui->acceleration_dspinbox->setEnabled(true);
+	ui->acceleration_label->setEnabled(true);
+	ui->maxJerk_dspinbox->setEnabled(true);
+	ui->maxJerk_label->setEnabled(true);
+	ui->maxJerk_label->setText("Cornering Junction Deviance (mm)");
+	}
+	else if(index == 3) {
+	ui->acceleration_dspinbox->setEnabled(true);
+	ui->acceleration_label->setEnabled(true);
+	ui->maxJerk_dspinbox->setEnabled(true);
+	ui->maxJerk_label->setEnabled(true);
+	ui->maxJerk_label->setText("Cornering Junction Deviance (mm)");
+	}
 }
 
 void Settings::on_gridColor_tButton_clicked()
@@ -405,8 +406,6 @@ void Settings::on_moveColor_tButton_clicked()
 	if(color.isValid())
 		ui->moveColor_lEdit->setText(color.name());}
 
-/** ********************(Preprocess Settings)******************** **/
-
 /** ********************(Serial Communication)******************** **/
 
 void Settings::RefreshPortList()
@@ -417,12 +416,6 @@ void Settings::RefreshPortList()
 void Settings::on_refreshArduinoPortList_tButton_clicked()
 {
 	RefreshPortList();
-}
-
-int Settings::SaveAllSettings()
-{
-	SaveMachineSettings();
-	return 0;
 }
 
 bool Settings::grblSettings::operator== (grblSettings other)

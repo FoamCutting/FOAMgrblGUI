@@ -68,7 +68,6 @@
 #define G_MASK "Step_Invert_Mask"
 
 
-
 namespace Ui {
 	class Settings;
 }
@@ -80,85 +79,58 @@ class Settings : public QWidget
 public:
 	~Settings();
 	explicit Settings(QWidget *parent = 0);
-//	  struct grblSettings {
-//		  int grblVersion;
-//		  float stepsX;
-//		  float stepsY;
-//		  float stepsZ;
-//		  float feedRate;
-//		  float seekRate;
-//		  float arcSegment;
-//		  float acceleration;
-//		  float cornering;
-//		  uint8_t stepInvert;
-//		  uint8_t stepPulse;
-//		  //uint8_t microsteps;
 
-//		  bool operator==(grblSettings);
-//		  bool CompareFloats(float, float);
-//	  };
-	enum{machSizeUnits, machSizeX, machSizeY, machJogIncrement,
-	 plotGridUnits, plotGridColor, plotMoveColor, plotCutColor, plotArcPrecision,
-	 ardPortName, ardBaudRate,
-	 preEnabled, preOptimize, preCheckCompatibility, preAlwaysDefaultFeed, preRemoveLineNum, preRemoveUnnecessary, preRemoveUnsupported,
-	 preRemoveArcs, preArcSegments, preUniformZ, preZMagnitude, preSaveFile, preFileAppend,
-	 grblVersion, grblStepsX, grblStepsY, grblStepsZ, grblStepPulse, grblFeedRate, grblSeekRate, grblArcSegment, grblStepInvert, grblAcceleration, grblCornering,
-	 SEPARATOR,
-	 globDefaultMach, globCurrentMach
-	};
-	struct machineSettings{
-	bool units;
-	float sizeX;
-	float sizeY;
-	float jogIncrement;
+	struct machineSettings {
+		bool units;
+		float sizeX;
+		float sizeY;
+		float jogIncrement;
 	};
 	struct plotSettings {
-	bool gridUnits;
-	QString gridColor;
-	QString moveColor;
-	QString cutColor;
-	float arcPrecision;
+		bool gridUnits;
+		QString gridColor;
+		QString moveColor;
+		QString cutColor;
+		float arcPrecision;
 	};
 	struct arduinoSettings {
-	QString portName;
-	int baudRate;
+		QString portName;
+		int baudRate;
 	};
 	struct grblSettings {
-	int version;
-	float stepsX;
-	float stepsY;
-	float stepsZ;
-	float feedRate;
-	float seekRate;
-	float arcSegment;
-	float acceleration;
-	float cornering;
-	uint8_t stepInvert;
-	uint8_t stepPulse;
-	//uint8_t microsteps;
+		int version;
+		float stepsX;
+		float stepsY;
+		float stepsZ;
+		float feedRate;
+		float seekRate;
+		float arcSegment;
+		float acceleration;
+		float cornering;
+		uint8_t stepInvert;
+		uint8_t stepPulse;
+		//uint8_t microsteps;
 
 	bool operator==(grblSettings);
 	};
-	struct preprocessSettings
-	{
-	bool enabled;
-	bool optimize;
-	bool checkCompatibility;
-	bool alwaysDefaultFeed;
-	bool removeLineNumbers;
-	bool removeUnnecessaryCommands;
-	bool removeUnsupportedCommands;
-	bool removeArcs;
-	int arcSegments;
-	bool uniformZ;
-	float zMagnitude;
-	bool saveFile;
-	QString fileAppend;
+	struct preprocessSettings {
+		bool enabled;
+		bool optimize;
+		bool checkCompatibility;
+		bool alwaysDefaultFeed;
+		bool removeLineNumbers;
+		bool removeUnnecessaryCommands;
+		bool removeUnsupportedCommands;
+		bool removeArcs;
+		int arcSegments;
+		bool uniformZ;
+		float zMagnitude;
+		bool saveFile;
+		QString fileAppend;
 	};
-	struct globalSettings
-	{
-	QString defaultMachine;
-	QString currentMachine;
+	struct globalSettings {
+		QString defaultMachine;
+		QString currentMachine;
 	};
 
 	void SetErrorHandler(ErrorHandler*);
@@ -170,73 +142,46 @@ public:
 	arduinoSettings ArduinoSettings(){return settings.arduino;}
 	globalSettings GlobalSettings(){return settings.global;}
 
-	QString MachineName() {
-	return settings.global.currentMachine;
-	}
 	void setMachineName(QString name) {
-	settings.global.currentMachine = name;
+		settings.global.currentMachine = name;
 	}
 	QDir ApplicationDirectory() {
-	return applicationDirectory;
+		return applicationDirectory;
 	}
 
-	//	  bool CompareFloats(float, float);
-
-
 private:
+	Ui::Settings *ui;
 	QWidget *par;
-	static QString filePath;
+	ErrorHandler *err;
 	static QDir applicationDirectory;
 
 	class allSettings{
-	public:
-	machineSettings machine;
-	plotSettings plot;
-	arduinoSettings arduino;
-	preprocessSettings preprocess;
-	grblSettings grbl;
-	globalSettings global;
+		public:
+		machineSettings machine;
+		plotSettings plot;
+		arduinoSettings arduino;
+		preprocessSettings preprocess;
+		grblSettings grbl;
+		globalSettings global;
 	}settings,defaultSettings;
-	Ui::Settings *ui;
 
 	int Init();
 
-	int ReadGlobalFile(QString fileName);
-	int ReadMachineFile(QString fileName);
 	template<typename S>
 	void PutSetting(QString description, QFile *file, S setting);
-	int SaveAllSettings();
 
-	int GetGlobalSettings();
+	int ReadGlobalFile(QString fileName);
 	int PutGlobalSettings(QString fileName);
 	void SaveGlobalSettings();
 	void DisplayGlobalSettings();
 
-
-	void GetGrblSettings();
-	void PutGrblSettings();
-	void DisplayGrblSettings();
-	void SaveGrblSettings();
-	void AdjustForGrblVersion();
-	void PutDeviceGrblSettings();
-
-	int GetMachineSettings(QString fileName);
+	int ReadMachineFile(QString fileName);
 	int PutMachineSettings(QString fileName);
 	void SaveMachineSettings();
 	void DisplayMachineSettings();
 
-	void GetPreprocessSettings();
-	void PutPreprocessSettings();
-	void SavePreprocessSettings();
-	void DisplayPreprocessSettings();
-
-	grblSettings deviceGrblSettings;
-	ErrorHandler *err;
-
 	QColor SetColorSample(QToolButton*,QColor, bool dialog = 1);
 
-//	  QextSerialEnumerator enumerator;
-	bool writingToArduino;
 	void RefreshPortList();
 
 protected:
@@ -255,7 +200,6 @@ private slots:
 	void on_grblVerson_combo_currentIndexChanged(int index);
 	void on_setMachDefault_pButton_clicked();
 	void on_save_pButton_clicked();
-
 	void on_close_pButton_clicked();
 
 signals:
