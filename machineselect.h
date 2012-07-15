@@ -10,23 +10,23 @@
 
 class MachineSelect : public QDialog
 {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    explicit MachineSelect(QString, QWidget *parent = 0);
-    QVBoxLayout *vLayout;
-    QHBoxLayout *hLayout;
-    QPushButton *ok_pButton;
-    QPushButton *cancel_pButton;
-    QComboBox *machineList_combo;
-    void SetSettings(Settings*);
-    void SetPreference(QString);
+	explicit MachineSelect(QString, QWidget *parent = 0);
+	QVBoxLayout *vLayout;
+	QHBoxLayout *hLayout;
+	QPushButton *ok_pButton;
+	QPushButton *cancel_pButton;
+	QComboBox *machineList_combo;
+	void SetSettings(Settings*);
+//	  void SetPreference(QString);
 
 private:
-    Settings *settings;
-    QString *preferred;
+	Settings *settings;
+//	  QString *preferred;
 
 signals:
-    void machineChanged();
+	void machineChanged();
 
 public slots:
 

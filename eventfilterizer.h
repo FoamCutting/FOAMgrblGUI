@@ -8,21 +8,21 @@
 
 class EventFilterizer : public QObject
 {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    explicit EventFilterizer(QObject *parent = 0);
+	explicit EventFilterizer(QObject *parent = 0);
 
 protected:
-    bool eventFilter(QObject *obj, QEvent *event);
+	bool eventFilter(QObject *obj, QEvent *event);
 
 signals:
-    void scrollIntercept(float, QPoint);
-    void mouseMoveIntercept(QPoint);
-    void mouseMiddleClickIntercept(QPoint);
-    void mouseMiddleReleaseIntercept();
-    void mouseLeftClickIntercept();
-    void mouseLeftReleaseIntercept();
-    void resizeIntercept();
+	void scrollIntercept(float, QPoint);
+	void mouseMoveIntercept(QPoint);
+	void mouseMiddleClickIntercept(QPoint);
+	void mouseMiddleReleaseIntercept();
+	void mouseLeftClickIntercept();
+	void mouseLeftReleaseIntercept();
+	void resizeIntercept();
 
 public slots:
 

@@ -18,46 +18,46 @@
 
 class GCodePlot : public QObject
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    explicit GCodePlot(QObject *parent = 0);
-    ~GCodePlot();
-    void processGCodes(QString);
-    QGraphicsScene* scene();
-    void setSettings(Settings*);
+	explicit GCodePlot(QObject *parent = 0);
+	~GCodePlot();
+	void processGCodes(QString);
+	QGraphicsScene* scene();
+	void setSettings(Settings*);
 
 public slots:
 
 private:
-    QElapsedTimer timer;
+	QElapsedTimer timer;
 
-    void setDefaults();
-    void applySettings();
-    Settings *settings;
+	void setDefaults();
+	void applySettings();
+	Settings *settings;
 
-    QPen drawPen;
-    QGraphicsScene* GCodeScene;
+	QPen drawPen;
+	QGraphicsScene* GCodeScene;
 
-    enum{INCHES, MM};
-    bool arcMode;
-    enum{Radius, Center};
-    bool arcCenterMode;
-    bool coordinateMode;
-    enum{Absolute, Incremental};
+	enum{INCHES, MM};
+	bool arcMode;
+	enum{Radius, Center};
+	bool arcCenterMode;
+	bool coordinateMode;
+	enum{Absolute, Incremental};
 
-    int drawMode;
-    enum{None, Linear, CWArc, CCWArc};
+	int drawMode;
+	enum{None, Linear, CWArc, CCWArc};
 
-    int scaleFactor;
+	int scaleFactor;
 
-    void drawGrid();
-    void drawLine(float,float,float,float);
-    void calculateArcElements(float,float,float,float,float);
-    void calculateArcElements(float,float,float,float,float,float);
-    void drawArc(float,float,float,float,float);
-    float calculateTheta(float,float);
-//    inline QString GetNumString(QString gcodeString, int *pos);
+	void drawGrid();
+	void drawLine(float,float,float,float);
+	void calculateArcElements(float,float,float,float,float);
+	void calculateArcElements(float,float,float,float,float,float);
+	void drawArc(float,float,float,float,float);
+	float calculateTheta(float,float);
+//	  inline QString GetNumString(QString gcodeString, int *pos);
 };
 
 #endif // GCODEPLOT_H

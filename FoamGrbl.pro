@@ -5,10 +5,11 @@
 #-------------------------------------------------
 
 
-QT       += core gui
+QT	    += core gui
+CONFIG	    += serialport
 
-TARGET = FoamGrbl
-TEMPLATE = app
+TARGET	    = FoamGrbl
+TEMPLATE    = app
 
 CONFIG(debug, debug|release) {
     DESTDIR = $$PWD/../FoamGrbl-Debug
@@ -22,7 +23,7 @@ CONFIG(debug, debug|release) {
     UI_DIR = $$PWD/../FoamGrbl-Release/tmp
 }
 
-SOURCES += main.cpp\
+SOURCES += main.cpp \
     gcodeplot.cpp \
     gcodetext.cpp \
     errorhandler.cpp \
@@ -61,12 +62,5 @@ OTHER_FILES +=
 
 RESOURCES +=
 
-INCLUDEPATH += $$PWD/../qserialdevice/src/qserialdevice
-INCLUDEPATH += $$PWD/../qserialdevice/src/qserialdeviceenumerator
 
-DEPENDPATH += $$PWD/../qserialdevice/src/qserialdevice
-DEPENDPATH +=  $$PWD/../qserialdevice/src/qserialdeviceenumerator
-
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../qserialdevice/src/build/release -lqserialdevice
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../qserialdevice/src/build/debug -lqserialdevice
-else:unix: LIBS += -L$$PWD/../qserialdevice/src/build/release/ -lqserialdevice
+#QMAKE_POST_LINK = ../FoamGrbl-Release/FoamGrbl

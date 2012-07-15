@@ -10,27 +10,27 @@
 
 class NewMachineDialog : public QDialog
 {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    explicit NewMachineDialog(QWidget *parent = 0);
-    QVBoxLayout *vLayout;
-    QHBoxLayout *hLayout;
-    QPushButton *ok_pButton;
-    QPushButton *cancel_pButton;
-    QLineEdit *newMachineName_lEdit;
-    void SetSettings(Settings*);
+	explicit NewMachineDialog(QWidget *parent = 0);
+	QVBoxLayout *vLayout;
+	QHBoxLayout *hLayout;
+	QPushButton *ok_pButton;
+	QPushButton *cancel_pButton;
+	QLineEdit *newMachineName_lEdit;
+	void SetSettings(Settings*);
 
 private:
-    Settings *settings;
+	Settings *settings;
 
 signals:
-    void machineChanged();
+	void machineChanged();
 
 public slots:
 
 private slots:
-    void okay();
-    void cancel();
+	void okay();
+	void cancel();
 
 };
 
