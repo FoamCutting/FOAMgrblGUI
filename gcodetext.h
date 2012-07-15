@@ -15,33 +15,33 @@
 
 class GCodeText : public QObject
 {
-    Q_OBJECT
+	Q_OBJECT
 
 private:
-    bool GCodeDocumentSet;
-    QTextDocument* GCodeDocument;
-    QFile* GCodeFile;
-    ErrorHandler* err;
-    Settings* settings;
+	bool GCodeDocumentSet;
+	QTextDocument* GCodeDocument;
+	QFile* GCodeFile;
+	ErrorHandler* err;
+	Settings* settings;
 
 public:
-    ~GCodeText();
-    explicit GCodeText(QObject *parent = 0);
-    void setDocument(QTextDocument *document);
-    void setErrorHandler(ErrorHandler *handler);
-    void setFile(QFile*);
-    QTextDocument* document();
-    void scale(float xScale, float yScale);
-    void offset(float xOffset, float yOffset, bool units);
-    void toAbsolute();
-    void toIncremental();
-    void addLineNumbers();
-    void removeLineNumbers();
-    int countLines();
-    int getUnits();
-    bool check();
-    QString Preprocess();
-    void SetSettings(Settings*);
+	~GCodeText();
+	explicit GCodeText(QObject *parent = 0);
+	void setDocument(QTextDocument *document);
+	void setErrorHandler(ErrorHandler *handler);
+	void setFile(QFile*);
+	QTextDocument* document();
+	void scale(float xScale, float yScale);
+	void offset(float xOffset, float yOffset, bool units);
+	void toAbsolute();
+	void toIncremental();
+	void addLineNumbers();
+	void removeLineNumbers();
+	int countLines();
+	int getUnits();
+	bool check();
+	QString Preprocess();
+	void SetSettings(Settings*);
 
 signals:
 

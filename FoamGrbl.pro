@@ -5,11 +5,11 @@
 #-------------------------------------------------
 
 
-QT       += core gui
-CONFIG += serialport
+QT	    += core gui
+CONFIG	    += serialport
 
-TARGET = FoamGrbl
-TEMPLATE = app
+TARGET	    = FoamGrbl
+TEMPLATE    = app
 
 CONFIG(debug, debug|release) {
     DESTDIR = $$PWD/../FoamGrbl-Debug
@@ -23,7 +23,7 @@ CONFIG(debug, debug|release) {
     UI_DIR = $$PWD/../FoamGrbl-Release/tmp
 }
 
-SOURCES += main.cpp\
+SOURCES += main.cpp \
     gcodeplot.cpp \
     gcodetext.cpp \
     errorhandler.cpp \
