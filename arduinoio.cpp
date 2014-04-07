@@ -4,7 +4,7 @@ ArduinoIO::ArduinoIO(QObject *parent) :
 	QObject(parent)
 {
 //	  arduinoPort = new AbstractSerial();
-	arduinoPort = new SerialPort();
+	arduinoPort = new QSerialPort();
 	deviceState = DISCONNECTED;
 	GrblSettings.version = -1;
 	connect(this, SIGNAL(deviceStateChanged(int)), this, SLOT(SetDeviceState(int)));
@@ -24,9 +24,9 @@ void ArduinoIO::SetErrorHandler(ErrorHandler *handler)
 QStringList ArduinoIO::GetPorts()
 {
 	ports.clear();
-	SerialPortInfo::availablePorts();
+	QSerialPortInfo::availablePorts();
 
-	foreach (const SerialPortInfo &info, SerialPortInfo::availablePorts()) {
+	foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts()) {
 		QString s(QObject::tr("Port: %1\n"
 							  "Location: %2\n"
 							  "Description: %3\n"
@@ -69,19 +69,19 @@ bool ArduinoIO::OpenPort(int index)
 	return 0;
 	arduinoPortName = ports.at(index);
 	//arduinoPort->setDeviceName(arduinoPortName);
-	arduinoPort->setPort(arduinoPortName);
-	arduinoPort->setFlowControl(SerialPort::NoFlowControl);
-	arduinoPort->setParity(SerialPort::NoParity);
-	arduinoPort->setDataBits(SerialPort::Data8);
-	arduinoPort->setStopBits(SerialPort::OneStop);
-	arduinoPort->setRate(SerialPort::Rate9600);
+	arduinoPort->setPortName(arduinoPortName);
+	arduinoPort->setFlowControl(QSerialPort::NoFlowControl);
+	arduinoPort->setParity(QSerialPort::NoParity);
+	arduinoPort->setDataBits(QSerialPort::Data8);
+	arduinoPort->setStopBits(QSerialPort::OneStop);
+	arduinoPort->setBaudRate(QSerialPort::Baud9600);
 
 	arduinoPort->flush();
 	arduinoPort->reset();
 	deviceState = arduinoPort->open(QIODevice::ReadWrite);
 	if(deviceState) {
-	arduinoPort->setDtr(true);
-	arduinoPort->setRts(true);
+	arduinoPort->setDataTerminalReady(true);
+	arduinoPort->setRequestToSend(true);
 //	arduinoPort->setDtr(false);
 //	arduinoPort->setRts(false);
 	qDebug() << "Arduino Port Opened!";
@@ -257,7 +257,7 @@ bool ArduinoIO::SetBaudRate(int baud)
 	switch(baud)
 	{
 	case 9600:
-	arduinoPort->setRate(SerialPort::Rate9600);
+	arduinoPort->setBaudRate(QSerialPort::Baud9600);
 		return 1;
 	default:
 		return 0;
