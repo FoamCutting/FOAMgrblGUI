@@ -6,9 +6,8 @@
 
 //#include "serialdeviceenumerator.h"
 //#include "abstractserial.h"
-#include <QtAddOnSerialPort/serialport.h>
-#include <QtAddOnSerialPort/serialportinfo.h>
-QT_USE_NAMESPACE_SERIALPORT
+#include <QtSerialPort/qserialport.h>
+#include <QtSerialPort/qserialportinfo.h>
 
 #include "errorhandler.h"
 #include <QTimer>
@@ -23,7 +22,7 @@ class ArduinoIO : public QObject
 
 private:
 	//AbstractSerial *arduinoPort;
-	SerialPort *arduinoPort;
+	QSerialPort *arduinoPort;
 	QProcess *avrdude;
 	QString arduinoPortName;
 	QList<QString> dataBuffer;
